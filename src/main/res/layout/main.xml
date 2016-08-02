@@ -12,24 +12,35 @@
     android:text="Hello World, MainActivity"
     />
 <Button
-	android:id="@+id/button_low"
+	android:id="@+id/buttonLow"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="too low"
 	android:layout_below="@id/text"
-    android:layout_alignParentLeft="true" />
+    android:layout_alignParentLeft="true"
+	android:onClick="tooLowSelected" />
 <Button
-	android:id="@+id/button_high"
+		android:id="@+id/buttonPerfect"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Perfect"
+		android:layout_below="@id/text"
+		android:layout_toRightOf="@id/buttonLow"
+		android:onClick="perfectSelected"/>
+<Button
+	android:id="@+id/buttonHigh"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="too high"
 	android:layout_below="@id/text"
-	android:layout_toRightOf="@id/button_low"/>
+	android:layout_toRightOf="@id/buttonPerfect"
+	android:onClick="tooHighSelected"/>
 <Button
-			android:id="@+id/button_replay"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="replay"
-			android:layout_below="@id/text"
-			android:layout_toRightOf="@id/button_high"/>
+	android:id="@+id/buttonReplay"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="replay"
+	android:layout_below="@id/text"
+	android:layout_toRightOf="@id/buttonHigh"
+	android:onClick="replaySound"/>
 </RelativeLayout>
