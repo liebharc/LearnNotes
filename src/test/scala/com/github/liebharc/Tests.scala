@@ -5,18 +5,19 @@ import org.scalatest.FunSpec
 class BasicSpec extends FunSpec {
 
   describe("A sound triplet") {
+    it("should consist of a low, perfect and high variant") {
+      val sounds = SoundTriplet("G", 0, 1, 2)
+      assert(sounds(0).isTooLow == true)
+      assert(sounds(0).isPerfect == false)
+      assert(sounds(0).isTooHigh == false)
 
-    it("should convert to a list with three elements") {
-      val triplet = SoundTriplet(1, 3, 5)
-      assert(triplet.toList === List(1, 3, 5))
-    }
-  }
+      assert(sounds(1).isTooLow == false)
+      assert(sounds(1).isPerfect == true)
+      assert(sounds(1).isTooHigh == false)
 
-  describe("A sounds collection") {
-
-    it("should convert to a list with three elements per triplet") {
-      val sounds = Sounds(SoundTriplet(1, 3, 5))
-      assert(sounds.toList === List(1, 3, 5))
+      assert(sounds(2).isTooLow == false)
+      assert(sounds(2).isPerfect == false)
+      assert(sounds(2).isTooHigh == true)
     }
   }
 
@@ -44,8 +45,8 @@ class BasicSpec extends FunSpec {
     }
 
     it("should always pick a valid number from a sounds list") {
-      val sounds = Sounds(SoundTriplet(1, 3, 5))
-      assert(Utils.randomPick(sounds.toList) <= 5)
+      val sounds = SoundTriplet("F", 1, 3, 5)
+      assert(Utils.randomPick(sounds).id <= 5)
     }
   }
 }

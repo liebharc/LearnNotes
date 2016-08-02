@@ -6,7 +6,7 @@ import android.view._
 import android.media._
 
 object Utils {
-  def randomPick(all: List[Int]): Int = {
+  def randomPick[T](all: List[T]): T = {
     // Note that using scala random fails on the device, perhaps Proguard bug?
     import java.util.Random
     val random = new Random()
@@ -22,18 +22,43 @@ case class Statistics(right: Int, wrong: Int) {
   lazy val humanFriendly = right.toString + "/" + wrong.toString
 }
 
-case class SoundTriplet(tooLow: Int, perfect: Int, tooHigh: Int) {
-  val toList: List[Int] = List(tooLow, perfect, tooHigh)
+trait SoundSample {
+  val name: String
+  val id: Int
+  def isTooLow: Boolean
+  def isTooHigh: Boolean
+  def isPerfect: Boolean
 }
 
-case class Sounds(dNote: SoundTriplet) {
-  val toList: List[Int] = List(dNote).flatMap(t => t.toList)
+case class TooLowSample(name: String, id: Int) extends SoundSample {
+  override def isTooHigh: Boolean = false
+  override def isTooLow: Boolean = true
+  override def isPerfect: Boolean = false
+}
+
+case class TooHighSample(name: String, id: Int) extends SoundSample {
+  override def isTooHigh: Boolean = true
+  override def isTooLow: Boolean = false
+  override def isPerfect: Boolean = false
+}
+
+case class PerfectSample(name: String, id: Int) extends SoundSample {
+  override def isTooHigh: Boolean = false
+  override def isTooLow: Boolean = false
+  override def isPerfect: Boolean = true
+}
+
+object SoundTriplet {
+  def apply(name: String, tooLow: Int, perfect: Int, tooHigh: Int): List[SoundSample]
+    = List(TooLowSample(name, tooLow), PerfectSample(name, perfect), TooHighSample(name, tooHigh))
 }
 
 class MainActivity extends Activity with TypedFindView {
   private val volume = 1.0f
 
-  private lazy val textView = findView(TR.text)
+  private lazy val noteView = findView(TR.note)
+
+  private lazy val statsView = findView(TR.stats)
 
   /*
     Useful links for soundpool:
@@ -52,11 +77,13 @@ class MainActivity extends Activity with TypedFindView {
   }
 
   private lazy val sounds = {
-    val dNote = soundPool.load(this, R.raw.dstring, 1)
-    Sounds(SoundTriplet(dNote, dNote, dNote))
+    val dNote = soundPool.load(this, R.raw.dnote, 1)
+    val eNote = soundPool.load(this, R.raw.enote, 1)
+    val fNote = soundPool.load(this, R.raw.fsharpnote, 1)
+    SoundTriplet("E", dNote, eNote, fNote)
   }
 
-  private var currentSound = -1
+  private var currentSound: Option[SoundSample] = None
 
   private var stats = Statistics(0, 0)
 
@@ -64,27 +91,72 @@ class MainActivity extends Activity with TypedFindView {
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main)
-    textView.setText(stats.humanFriendly)
-    currentSound = Utils.randomPick(sounds.toList)
+    statsView.setText(stats.humanFriendly)
+    pickNewSound()
+  }
+
+  private def pickNewSound() {
+    val pick = Utils.randomPick(sounds)
+    currentSound = Some(pick)
+    noteView.setText(pick.name)
+  }
+
+  private def rightInput() {
+    stats = stats.rightInput()
+    statsView.setText(stats.humanFriendly)
+    pickNewSound()
+    playCurrentSound()
+  }
+
+  private def wrongInput() {
+    stats = stats.wrongInput()
+    statsView.setText(stats.humanFriendly)
   }
 
   def tooLowSelected(view: View) {
-    textView.setText("Too low")
+    currentSound match {
+      case None => ()
+      case Some(sound) if sound.isTooLow =>
+        rightInput()
+      case _ =>
+        wrongInput()
+    }
   }
 
   def perfectSelected(view: View) {
-    textView.setText("Perfect")
+    currentSound match {
+      case None => ()
+      case Some(sound) if sound.isPerfect =>
+        rightInput()
+      case _ =>
+        wrongInput()
+    }
   }
 
   def tooHighSelected(view: View) {
-    textView.setText("Too High")
+    currentSound match {
+      case None => ()
+      case Some(sound) if sound.isTooHigh =>
+        rightInput()
+      case _ =>
+        wrongInput()
+    }
   }
 
   def replaySound(view: View) {
     playCurrentSound()
   }
 
+  def statsReset(view: View) {
+    stats = Statistics(0, 0)
+    statsView.setText(stats.humanFriendly)
+  }
+
   def playCurrentSound() {
-    soundPool.play(currentSound, volume, volume, 1, 0, 1f);
+    currentSound match {
+      case None => ()
+      case Some(sound) =>
+        soundPool.play(sound.id, volume, volume, 1, 0, 1f);
+    }
   }
 }

@@ -6,33 +6,41 @@
     android:paddingRight="16dp" >
 
 <TextView
-    android:id="@+id/text"
+    android:id="@+id/note"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:text="Hello World, MainActivity"
-    />
+    android:text="" />
+
+<TextView
+    android:id="@+id/stats"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text=""
+    android:layout_below="@id/note"
+    android:layout_alignParentLeft="true"
+    android:onClick="statsReset" />
 <Button
 	android:id="@+id/buttonLow"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="too low"
-	android:layout_below="@id/text"
+	android:layout_below="@id/stats"
     android:layout_alignParentLeft="true"
 	android:onClick="tooLowSelected" />
 <Button
-		android:id="@+id/buttonPerfect"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="Perfect"
-		android:layout_below="@id/text"
-		android:layout_toRightOf="@id/buttonLow"
-		android:onClick="perfectSelected"/>
+    android:id="@+id/buttonPerfect"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Perfect"
+    android:layout_below="@id/stats"
+    android:layout_toRightOf="@id/buttonLow"
+    android:onClick="perfectSelected"/>
 <Button
 	android:id="@+id/buttonHigh"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="too high"
-	android:layout_below="@id/text"
+	android:layout_below="@id/stats"
 	android:layout_toRightOf="@id/buttonPerfect"
 	android:onClick="tooHighSelected"/>
 <Button
@@ -40,7 +48,7 @@
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:text="replay"
-	android:layout_below="@id/text"
+	android:layout_below="@id/stats"
 	android:layout_toRightOf="@id/buttonHigh"
 	android:onClick="replaySound"/>
 </RelativeLayout>
