@@ -3,3 +3,4 @@ project/project
 bin/
 local.properties
 .idea
+Samples/*_data/
