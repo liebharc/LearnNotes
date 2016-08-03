@@ -77,10 +77,42 @@ class MainActivity extends Activity with TypedFindView {
   }
 
   private lazy val sounds = {
-    val dNote = soundPool.load(this, R.raw.dnote, 1)
-    val eNote = soundPool.load(this, R.raw.enote, 1)
-    val fNote = soundPool.load(this, R.raw.fsharpnote, 1)
-    SoundTriplet("E", dNote, eNote, fNote)
+    var samples: List[List[SoundSample]] = Nil
+    samples ::= List(PerfectSample("D", soundPool.load(this, R.raw.dnote, 1)),
+                     TooHighSample("D", soundPool.load(this, R.raw.dhighnote, 1)))
+    samples ::= SoundTriplet("E",
+      soundPool.load(this, R.raw.elownote, 1),
+      soundPool.load(this, R.raw.enote, 1),
+      soundPool.load(this, R.raw.ehighnote, 1))
+    samples ::= SoundTriplet("F#",
+      soundPool.load(this, R.raw.fsharplownote, 1),
+      soundPool.load(this, R.raw.fsharpnote, 1),
+      soundPool.load(this, R.raw.fsharphighnote, 1))
+    samples ::= SoundTriplet("G",
+      soundPool.load(this, R.raw.glownote, 1),
+      soundPool.load(this, R.raw.gnote, 1),
+      soundPool.load(this, R.raw.ghighnote, 1))
+    samples ::= SoundTriplet("A",
+      soundPool.load(this, R.raw.alownote, 1),
+      soundPool.load(this, R.raw.anote, 1),
+      soundPool.load(this, R.raw.ahighnote, 1))
+    samples ::= SoundTriplet("B",
+      soundPool.load(this, R.raw.blownote, 1),
+      soundPool.load(this, R.raw.bnote, 1),
+      soundPool.load(this, R.raw.bhighnote, 1))
+    samples ::= SoundTriplet("C#",
+      soundPool.load(this, R.raw.csharplownote, 1),
+      soundPool.load(this, R.raw.csharpnote, 1),
+      soundPool.load(this, R.raw.csharphighnote, 1))
+    samples ::= SoundTriplet("D",
+      soundPool.load(this, R.raw.d2lownote, 1),
+      soundPool.load(this, R.raw.d2note, 1),
+      soundPool.load(this, R.raw.d2highnote, 1))
+    samples ::= SoundTriplet("E",
+      soundPool.load(this, R.raw.e2lownote, 1),
+      soundPool.load(this, R.raw.e2note, 1),
+      soundPool.load(this, R.raw.e2highnote, 1))
+    samples.flatten
   }
 
   private var currentSound: Option[SoundSample] = None

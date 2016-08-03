@@ -1,54 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:paddingLeft="16dp"
+    android:orientation="vertical"
+    android:gravity="center"
     android:paddingRight="16dp" >
-
-<TextView
-    android:id="@+id/note"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="" />
-
-<TextView
-    android:id="@+id/stats"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text=""
-    android:layout_below="@id/note"
-    android:layout_alignParentLeft="true"
-    android:onClick="statsReset" />
-<Button
-	android:id="@+id/buttonLow"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:text="too low"
-	android:layout_below="@id/stats"
-    android:layout_alignParentLeft="true"
-	android:onClick="tooLowSelected" />
-<Button
-    android:id="@+id/buttonPerfect"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Perfect"
-    android:layout_below="@id/stats"
-    android:layout_toRightOf="@id/buttonLow"
-    android:onClick="perfectSelected"/>
-<Button
-	android:id="@+id/buttonHigh"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:text="too high"
-	android:layout_below="@id/stats"
-	android:layout_toRightOf="@id/buttonPerfect"
-	android:onClick="tooHighSelected"/>
-<Button
-	android:id="@+id/buttonReplay"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
-	android:text="replay"
-	android:layout_below="@id/stats"
-	android:layout_toRightOf="@id/buttonHigh"
-	android:onClick="replaySound"/>
-</RelativeLayout>
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp">
+        <TextView
+            android:id="@+id/labelstats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:text="Your score: " />
+        <TextView
+            android:id="@+id/stats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:text="0/0"
+            android:onClick="statsReset"
+            android:layout_toRightOf="@id/labelstats"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:paddingBottom="20dp"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true">
+        <TextView
+            android:id="@+id/note"
+            android:textSize="30sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="F" />
+        <Button
+            android:id="@+id/buttonReplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="replay"
+            android:onClick="replaySound"
+            android:layout_toRightOf="@id/note"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true">
+        <Button
+            android:id="@+id/buttonLow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="too low"
+            android:onClick="tooLowSelected" />
+        <Button
+            android:id="@+id/buttonPerfect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Perfect"
+            android:layout_toRightOf="@id/buttonLow"
+            android:onClick="perfectSelected"/>
+        <Button
+            android:id="@+id/buttonHigh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="too high"
+            android:layout_toRightOf="@id/buttonPerfect"
+            android:onClick="tooHighSelected"/>
+    </RelativeLayout>
+</LinearLayout>
