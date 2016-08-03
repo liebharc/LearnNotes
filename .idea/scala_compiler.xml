@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="SBT 1" modules="learnnotes">
+      <parameters>
+        <parameter value="-bootclasspath" />
+        <parameter value="C:\Android\platforms\android-21\android.jar" />
+        <parameter value="-javabootclasspath" />
+        <parameter value="C:\Android\platforms\android-21\android.jar" />
+      </parameters>
+    </profile>
+  </component>
+</project>
