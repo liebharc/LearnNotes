@@ -4,13 +4,14 @@
     android:layout_height="fill_parent"
     android:paddingLeft="16dp"
     android:orientation="vertical"
-    android:gravity="center"
     android:paddingRight="16dp" >
     <RelativeLayout
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp">
+        android:paddingTop="20dp"
+        android:paddingBottom="50dp"
+        android:layout_gravity="center_horizontal" >
         <TextView
             android:id="@+id/labelstats"
             android:layout_width="wrap_content"
@@ -27,7 +28,8 @@
             android:layout_toRightOf="@id/labelstats"/>
     </RelativeLayout>
     <RelativeLayout
-        android:paddingBottom="20dp"
+        android:layout_gravity="center"
+        android:paddingBottom="50dp"
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,9 +37,11 @@
         <TextView
             android:id="@+id/note"
             android:textSize="30sp"
+            android:layout_gravity="center"
+            android:paddingRight="50dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="F" />
+            android:text="F#" />
         <Button
             android:id="@+id/buttonReplay"
             android:layout_width="wrap_content"
@@ -50,24 +54,25 @@
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:layout_centerHorizontal="true">
         <Button
             android:id="@+id/buttonLow"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="80sp"
             android:text="too low"
             android:onClick="tooLowSelected" />
         <Button
             android:id="@+id/buttonPerfect"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="80sp"
             android:text="Perfect"
             android:layout_toRightOf="@id/buttonLow"
             android:onClick="perfectSelected"/>
         <Button
             android:id="@+id/buttonHigh"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="80sp"
             android:text="too high"
             android:layout_toRightOf="@id/buttonPerfect"
             android:onClick="tooHighSelected"/>
