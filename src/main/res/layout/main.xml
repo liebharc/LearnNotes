@@ -29,26 +29,39 @@
     </RelativeLayout>
     <RelativeLayout
         android:layout_gravity="center"
-        android:paddingBottom="50dp"
         android:orientation="horizontal"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="200dp"
         android:layout_centerHorizontal="true">
-        <TextView
-            android:id="@+id/note"
-            android:textSize="30sp"
+        <ImageView
+            android:id="@+id/noteimage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="#AAAA00"/>
+    </RelativeLayout>
+    <RelativeLayout
             android:layout_gravity="center"
-            android:paddingRight="50dp"
+            android:paddingBottom="50dp"
+            android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="F#" />
+            android:layout_centerHorizontal="true">
+        <TextView
+                android:id="@+id/note"
+                android:textSize="30sp"
+                android:layout_gravity="center"
+                android:paddingRight="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="F#" />
         <Button
-            android:id="@+id/buttonReplay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="replay"
-            android:onClick="replaySound"
-            android:layout_toRightOf="@id/note"/>
+                android:id="@+id/buttonReplay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="replay"
+                android:onClick="replaySound"
+                android:layout_toRightOf="@id/note"/>
     </RelativeLayout>
     <RelativeLayout
         android:orientation="horizontal"

@@ -1,6 +1,7 @@
 package com.github.liebharc
 
 import android.app._
+import android.graphics.{Bitmap, BitmapFactory}
 import android.os._
 import android.view._
 import android.media._
@@ -25,38 +26,41 @@ case class Statistics(right: Int, wrong: Int) {
 trait SoundSample {
   val name: String
   val id: Int
+  val bitmap: Bitmap
   def isTooLow: Boolean
   def isTooHigh: Boolean
   def isPerfect: Boolean
 }
 
-case class TooLowSample(name: String, id: Int) extends SoundSample {
+case class TooLowSample(name: String, bitmap: Bitmap, id: Int) extends SoundSample {
   override def isTooHigh: Boolean = false
   override def isTooLow: Boolean = true
   override def isPerfect: Boolean = false
 }
 
-case class TooHighSample(name: String, id: Int) extends SoundSample {
+case class TooHighSample(name: String, bitmap: Bitmap, id: Int) extends SoundSample {
   override def isTooHigh: Boolean = true
   override def isTooLow: Boolean = false
   override def isPerfect: Boolean = false
 }
 
-case class PerfectSample(name: String, id: Int) extends SoundSample {
+case class PerfectSample(name: String, bitmap: Bitmap, id: Int) extends SoundSample {
   override def isTooHigh: Boolean = false
   override def isTooLow: Boolean = false
   override def isPerfect: Boolean = true
 }
 
 object SoundTriplet {
-  def apply(name: String, tooLow: Int, perfect: Int, tooHigh: Int): List[SoundSample]
-    = List(TooLowSample(name, tooLow), PerfectSample(name, perfect), TooHighSample(name, tooHigh))
+  def apply(name: String, bitmap: Bitmap, tooLow: Int, perfect: Int, tooHigh: Int): List[SoundSample]
+    = List(TooLowSample(name, bitmap, tooLow), PerfectSample(name, bitmap, perfect), TooHighSample(name, bitmap, tooHigh))
 }
 
 class MainActivity extends Activity with TypedFindView {
   private val volume = 1.0f
 
   private lazy val noteView = findView(TR.note)
+
+  private lazy val noteImageView = findView(TR.noteimage)
 
   private lazy val statsView = findView(TR.stats)
 
@@ -78,40 +82,51 @@ class MainActivity extends Activity with TypedFindView {
 
   private lazy val sounds = {
     var samples: List[List[SoundSample]] = Nil
-    samples ::= List(PerfectSample("D", soundPool.load(this, R.raw.dnote, 1)),
-                     TooHighSample("D", soundPool.load(this, R.raw.dhighnote, 1)))
+    def loadImage(id: Int): Bitmap = BitmapFactory.decodeStream(getResources().openRawResource(id))
+    def loadSound(id: Int): Int = soundPool.load(this, id, 1)
+    val dNoteImage = loadImage(R.raw.imgnoted3)
+    samples ::= List(PerfectSample("D", dNoteImage, loadSound(R.raw.dnote)),
+                     TooHighSample("D", dNoteImage, loadSound(R.raw.dhighnote)))
     samples ::= SoundTriplet("E",
-      soundPool.load(this, R.raw.elownote, 1),
-      soundPool.load(this, R.raw.enote, 1),
-      soundPool.load(this, R.raw.ehighnote, 1))
+      loadImage(R.raw.imgnotee3),
+      loadSound(R.raw.elownote),
+      loadSound(R.raw.enote),
+      loadSound(R.raw.ehighnote))
     samples ::= SoundTriplet("F#",
-      soundPool.load(this, R.raw.fsharplownote, 1),
-      soundPool.load(this, R.raw.fsharpnote, 1),
-      soundPool.load(this, R.raw.fsharphighnote, 1))
+      loadImage(R.raw.imgnotef3),
+      loadSound( R.raw.fsharplownote),
+      loadSound(R.raw.fsharpnote),
+      loadSound(R.raw.fsharphighnote))
     samples ::= SoundTriplet("G",
-      soundPool.load(this, R.raw.glownote, 1),
-      soundPool.load(this, R.raw.gnote, 1),
-      soundPool.load(this, R.raw.ghighnote, 1))
+      loadImage(R.raw.imgnoteg3),
+      loadSound(R.raw.glownote),
+      loadSound(R.raw.gnote),
+      loadSound(R.raw.ghighnote))
     samples ::= SoundTriplet("A",
-      soundPool.load(this, R.raw.alownote, 1),
-      soundPool.load(this, R.raw.anote, 1),
-      soundPool.load(this, R.raw.ahighnote, 1))
+      loadImage(R.raw.imgnotea3),
+      loadSound(R.raw.alownote),
+      loadSound(R.raw.anote),
+      loadSound(R.raw.ahighnote))
     samples ::= SoundTriplet("B",
-      soundPool.load(this, R.raw.blownote, 1),
-      soundPool.load(this, R.raw.bnote, 1),
-      soundPool.load(this, R.raw.bhighnote, 1))
+      loadImage(R.raw.imgnoteb3),
+      loadSound(R.raw.blownote),
+      loadSound(R.raw.bnote),
+      loadSound(R.raw.bhighnote))
     samples ::= SoundTriplet("C#",
-      soundPool.load(this, R.raw.csharplownote, 1),
-      soundPool.load(this, R.raw.csharpnote, 1),
-      soundPool.load(this, R.raw.csharphighnote, 1))
+      loadImage(R.raw.imgnotec4),
+      loadSound(R.raw.csharplownote),
+      loadSound(R.raw.csharpnote),
+      loadSound(R.raw.csharphighnote))
     samples ::= SoundTriplet("D",
-      soundPool.load(this, R.raw.d2lownote, 1),
-      soundPool.load(this, R.raw.d2note, 1),
-      soundPool.load(this, R.raw.d2highnote, 1))
+      loadImage(R.raw.imgnoted4),
+      loadSound(R.raw.d2lownote),
+      loadSound(R.raw.d2note),
+      loadSound(R.raw.d2highnote))
     samples ::= SoundTriplet("E",
-      soundPool.load(this, R.raw.e2lownote, 1),
-      soundPool.load(this, R.raw.e2note, 1),
-      soundPool.load(this, R.raw.e2highnote, 1))
+      loadImage(R.raw.imgnotee4),
+      loadSound(R.raw.e2lownote),
+      loadSound(R.raw.e2note),
+      loadSound(R.raw.e2highnote))
     samples.flatten
   }
 
@@ -131,6 +146,7 @@ class MainActivity extends Activity with TypedFindView {
     val pick = Utils.randomPick(sounds)
     currentSound = Some(pick)
     noteView.setText(pick.name)
+    noteImageView.setImageBitmap(pick.bitmap)
   }
 
   private def rightInput() {
