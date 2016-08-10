@@ -47,21 +47,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true">
-        <TextView
-                android:id="@+id/note"
-                android:textSize="30sp"
-                android:layout_gravity="center"
-                android:paddingRight="50dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="F#" />
         <Button
                 android:id="@+id/buttonReplay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="replay"
-                android:onClick="replaySound"
-                android:layout_toRightOf="@id/note"/>
+                android:onClick="replaySound"/>
     </RelativeLayout>
     <RelativeLayout
         android:orientation="horizontal"

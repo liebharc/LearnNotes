@@ -58,8 +58,6 @@ object SoundTriplet {
 class MainActivity extends Activity with TypedFindView {
   private val volume = 1.0f
 
-  private lazy val noteView = findView(TR.note)
-
   private lazy val noteImageView = findView(TR.noteimage)
 
   private lazy val statsView = findView(TR.stats)
@@ -145,7 +143,6 @@ class MainActivity extends Activity with TypedFindView {
   private def pickNewSound() {
     val pick = Utils.randomPick(sounds)
     currentSound = Some(pick)
-    noteView.setText(pick.name)
     noteImageView.setImageBitmap(pick.bitmap)
   }
 
