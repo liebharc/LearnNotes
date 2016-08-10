@@ -6,7 +6,7 @@ class BasicSpec extends FunSpec {
 
   describe("A sound triplet") {
     it("should consist of a low, perfect and high variant") {
-      val sounds = SoundTriplet("G", 0, 1, 2)
+      val sounds = SoundTriplet("G", null, 0, 1, 2)
       assert(sounds(0).isTooLow == true)
       assert(sounds(0).isPerfect == false)
       assert(sounds(0).isTooHigh == false)
@@ -45,7 +45,7 @@ class BasicSpec extends FunSpec {
     }
 
     it("should always pick a valid number from a sounds list") {
-      val sounds = SoundTriplet("F", 1, 3, 5)
+      val sounds = SoundTriplet("F", null, 1, 3, 5)
       assert(Utils.randomPick(sounds).id <= 5)
     }
   }
