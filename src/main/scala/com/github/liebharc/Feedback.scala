@@ -1,18 +1,20 @@
 package com.github.liebharc
 
+import java.text.DecimalFormat
 import java.util
 
 import android.app.Activity
-import android.media.{AudioFormat, AudioRecord, MediaRecorder}
+import android.media.{AudioFormat, AudioRecord}
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.{LayoutInflater, View, ViewGroup}
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data._
+import com.github.mikephil.charting.formatter.ValueFormatter
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
+import com.github.mikephil.charting.utils.{ColorTemplate, ViewPortHandler}
 import com.meapsoft.FFT
-
-import scala.concurrent.duration.Duration
 
 trait FeedbackBehaviour extends Activity with TypedFindView {
   private def pitchChart: LineChart = findView(TR.pitch)
@@ -56,7 +58,7 @@ class FeedbackFragment extends Fragment {
 }
 
 class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
-  private val SampleRates = List(8000, 11025, 22050, 44100) // Try to find a low as possible sample rate
+  private val SampleRates = List(11025, 8000, 22050, 44100) // Try to find a low sample rate first
   private val BufferElements = 1024 // Number of double elements
   private val LogTag = "Violin Feedback"
   private var active = true
@@ -114,7 +116,6 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
     val analysis = new Analysis(sampleRate, BufferElements)
     val amplitudes  = new util.ArrayList[Entry]
     val freqDiffs  = new util.ArrayList[Entry]
-    val noteNames  = new util.ArrayList[String]
     var frame = 0
     while (active) {
       recorder.read(data, 0, BufferElements);
@@ -123,27 +124,42 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
       }
 
       val result = analysis.analyse(real)
-      amplitudes.add(new Entry(result.amplitude.toFloat, frame))
-      freqDiffs.add(new Entry(result.frequency.toFloat, frame))
-      noteNames.add(result.note)
+      amplitudes.add(new Entry(result.amplitude.toFloat, frame, result.note))
+      freqDiffs.add(new Entry(result.deltaFrequency.toFloat, frame, result.note))
       frame += 1
     }
     recorder.stop()
     recorder.release()
 
+    val formatter = new AddNoteNamesValueFormatter()
     val ampDataSet = new LineDataSet(amplitudes, "Amplitudes")
+    ampDataSet.setColor(ColorTemplate.COLORFUL_COLORS(1))
+    ampDataSet.setCircleColor(ColorTemplate.COLORFUL_COLORS(1))
+    ampDataSet.setValueFormatter(formatter)
     val freqDiffDataSet = new LineDataSet(freqDiffs, "Pitch Error")
-    val lineData = new LineData(noteNames, combine(ampDataSet, freqDiffDataSet))
+    freqDiffDataSet.setColor(ColorTemplate.COLORFUL_COLORS(0))
+    freqDiffDataSet.setCircleColor(ColorTemplate.COLORFUL_COLORS(0))
+    freqDiffDataSet.setValueFormatter(formatter)
+    val lineData = new LineData(combine(ampDataSet, freqDiffDataSet))
     amplitudesChart.setData(lineData)
   }
 
-  private def combine(dataSets: LineDataSet*): util.ArrayList[LineDataSet] = {
-    val result = new util.ArrayList[LineDataSet](dataSets.length)
+  private def combine(dataSets: LineDataSet*): util.List[ILineDataSet] = {
+    val result = new util.ArrayList[ILineDataSet](dataSets.length)
     for (set <- dataSets) {
       result.add(set)
     }
 
     result
+  }
+}
+
+class AddNoteNamesValueFormatter() extends ValueFormatter {
+  private val decimalFormat: DecimalFormat = new DecimalFormat("########0") // Integer part only
+
+  override def getFormattedValue(value: Float, entry: Entry, dataSetIndex: Int, viewPortHandler: ViewPortHandler): String = {
+    val note = entry.getData.asInstanceOf[String]
+    note + ": " + decimalFormat.format(value)
   }
 }
 
