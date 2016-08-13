@@ -44,7 +44,7 @@ class MainActivity
     setContentView(R.layout.main)
     val pager = findView(TR.pager)
     pager.setAdapter(new PagerAdapter(getSupportFragmentManager))
-    val actionBar = getActionBar()
+    val actionBar = getActionBar
     actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS)
     val names = "Control" :: "Feedback" :: "Quiz" :: Nil
     for (name <- names) {
@@ -93,7 +93,7 @@ class CustomViewPager(context: Context, attr: AttributeSet) extends ViewPager(co
       return super.onTouchEvent(ev)
     }
 
-    return false
+    false
   }
 
   override def onInterceptTouchEvent(ev: MotionEvent): Boolean = {
@@ -101,6 +101,6 @@ class CustomViewPager(context: Context, attr: AttributeSet) extends ViewPager(co
       return super.onInterceptTouchEvent(ev)
     }
 
-    return false
+    false
   }
 }

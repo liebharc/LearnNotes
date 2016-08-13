@@ -195,8 +195,7 @@ trait QuizBehaviour
 class QuizFragment extends Fragment {
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     super.onCreateView(inflater, container, savedInstanceState)
-    val view = inflater.inflate(R.layout.quiz, container, false)
-    return view
+    inflater.inflate(R.layout.quiz, container, false)
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle): Unit =  {

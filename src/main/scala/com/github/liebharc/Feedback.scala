@@ -16,10 +16,14 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.github.mikephil.charting.utils.{ColorTemplate, ViewPortHandler}
 import com.meapsoft.FFT
 
+import scala.concurrent.duration.Duration
+
 trait FeedbackBehaviour extends Activity with TypedFindView {
   private def pitchChart: LineChart = findView(TR.pitch)
 
   private var audioRecord: Option[AnalysisLoop] = None
+
+  private var currentThread: Option[Thread] = None
 
   def initializeFeedback(): Unit = {
 
@@ -27,27 +31,37 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
 
   def startAnalysis(): Unit = {
     stopAnalysis()
-    val analysis = new AnalysisLoop(pitchChart)
+    val analysis = new AnalysisLoop()
     audioRecord = Some(analysis)
     val thread = new java.lang.Thread(analysis)
     thread.start()
+    currentThread = Some(thread)
   }
 
   def stopAnalysis(): Unit = {
     audioRecord match {
-      case Some(r) => r.abort()
+      case Some(r) =>
+        r.abort()
+        joinThread()
+        r.display(pitchChart)
       case _ => ()
     }
 
     audioRecord = None
+  }
+
+  private def joinThread(): Unit = {
+    currentThread match {
+      case Some(t) => t.join(Duration(10, "s").toMillis)
+      case _ => ()
+    }
   }
 }
 
 class FeedbackFragment extends Fragment {
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     super.onCreateView(inflater, container, savedInstanceState)
-    val view = inflater.inflate(R.layout.feedback, container, false)
-    return view
+    inflater.inflate(R.layout.feedback, container, false)
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
@@ -57,7 +71,7 @@ class FeedbackFragment extends Fragment {
   }
 }
 
-class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
+class AnalysisLoop() extends java.lang.Runnable {
   private val SampleRates = List(11025, 8000, 22050, 44100) // Try to find a low sample rate first
   private val BufferElements = 1024 // Number of double elements
   private val LogTag = "Violin Feedback"
@@ -82,13 +96,14 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
          channelConfig <- List(AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO);
          sampleRate <- SampleRates) {
       try {
-        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-        Log.d(LogTag, "Attempting rate " + sampleRate + "Hz, bits: " + audioFormat + ", channel: " + channelConfig);
+        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        Log.d(LogTag, "Attempting rate " + sampleRate + "Hz, bit format: " + audioFormat + ", channel: " + channelConfig)
         if (bufferSize != AudioRecord.ERROR_BAD_VALUE && bufferSize <= BufferElements) {
           // check if we can instantiate and have a success
-          val recorder = new AudioRecord(mic, sampleRate, channelConfig, audioFormat, BufferElements);
+          val recorder = new AudioRecord(mic, sampleRate, channelConfig, audioFormat, BufferElements)
 
-          if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
+          if (recorder.getState == AudioRecord.STATE_INITIALIZED) {
+            Log.d(LogTag, "Success with rate " + sampleRate + "Hz, bit format: " + audioFormat + ", channel: " + channelConfig)
             return Some(recorder)
           }
         }
@@ -98,8 +113,12 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
       }
     }
 
-    return None
+    None
   }
+
+  private val amplitudes  = new util.ArrayList[Entry]
+  private val freqDiffs  = new util.ArrayList[Entry]
+  private val noteNames  = new util.ArrayList[String]
 
   override def run(): Unit = {
     val recorderOption = attemptToCreateAnAudioRecord()
@@ -114,34 +133,45 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
     val data = new Array[Short](BufferElements)
     val real = new Array[Double](BufferElements)
     val analysis = new Analysis(sampleRate, BufferElements)
-    val amplitudes  = new util.ArrayList[Entry]
-    val freqDiffs  = new util.ArrayList[Entry]
+
     var frame = 0
     while (active) {
-      recorder.read(data, 0, BufferElements);
+      recorder.read(data, 0, BufferElements)
       for (i <- 0 until BufferElements) {
         real(i) = data(i).toDouble
       }
 
       val result = analysis.analyse(real)
-      amplitudes.add(new Entry(result.amplitude.toFloat, frame, result.note))
-      freqDiffs.add(new Entry(result.deltaFrequency.toFloat, frame, result.note))
+      amplitudes.add(new Entry(frame, result.amplitude.toFloat))
+      freqDiffs.add(new Entry(frame, result.deltaFrequency.toFloat))
+      noteNames.add(result.note)
       frame += 1
     }
     recorder.stop()
     recorder.release()
+  }
 
-    val formatter = new AddNoteNamesValueFormatter()
+  def display(amplitudesChart: LineChart): Unit = {
+    val white = 0xFFFFFFFF
+    val red = ColorTemplate.COLORFUL_COLORS(0)
+    val orange  = ColorTemplate.COLORFUL_COLORS(1)
+    val formatter = new AddNoteNamesValueFormatter(noteNames)
     val ampDataSet = new LineDataSet(amplitudes, "Amplitudes")
-    ampDataSet.setColor(ColorTemplate.COLORFUL_COLORS(1))
-    ampDataSet.setCircleColor(ColorTemplate.COLORFUL_COLORS(1))
-    ampDataSet.setValueFormatter(formatter)
+    ampDataSet.setColor(orange)
+    ampDataSet.setCircleColor(orange)
     val freqDiffDataSet = new LineDataSet(freqDiffs, "Pitch Error")
-    freqDiffDataSet.setColor(ColorTemplate.COLORFUL_COLORS(0))
-    freqDiffDataSet.setCircleColor(ColorTemplate.COLORFUL_COLORS(0))
-    freqDiffDataSet.setValueFormatter(formatter)
+    freqDiffDataSet.setColor(red)
+    freqDiffDataSet.setCircleColor(red)
     val lineData = new LineData(combine(ampDataSet, freqDiffDataSet))
+    lineData.setValueFormatter(formatter)
+    lineData.setValueTextColor(white)
     amplitudesChart.setData(lineData)
+    amplitudesChart.setDescription("")
+    amplitudesChart.setDescriptionColor(white)
+    amplitudesChart.getXAxis.setTextColor(white)
+    amplitudesChart.getAxisLeft.setTextColor(white)
+    amplitudesChart.getAxisRight.setTextColor(white)
+    amplitudesChart.invalidate()
   }
 
   private def combine(dataSets: LineDataSet*): util.List[ILineDataSet] = {
@@ -154,11 +184,19 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
   }
 }
 
-class AddNoteNamesValueFormatter() extends ValueFormatter {
-  private val decimalFormat: DecimalFormat = new DecimalFormat("########0") // Integer part only
+class AddNoteNamesValueFormatter(val notes: util.ArrayList[String]) extends ValueFormatter {
+ private val decimalFormat: DecimalFormat = new DecimalFormat("########0") // Integer part only
 
   override def getFormattedValue(value: Float, entry: Entry, dataSetIndex: Int, viewPortHandler: ViewPortHandler): String = {
-    val note = entry.getData.asInstanceOf[String]
+    val index = Math.round(entry.getX)
+    var note = "?"
+    if (index >= 0 && index < notes.size()){
+      val possibleNote = notes.get(index)
+      if (!possibleNote.isEmpty) {
+        note = possibleNote
+      }
+    }
+
     note + ": " + decimalFormat.format(value)
   }
 }
