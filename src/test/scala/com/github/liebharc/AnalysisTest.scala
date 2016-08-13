@@ -13,6 +13,16 @@ class AnalysisSpec extends FunSpec {
     new File(cwd + "/src/main/res/raw/" + name)
   }
 
+  describe("Known notes") {
+    it("should be recognized by their frequency") {
+      assert(NoteFrequencies.findClosestNote(440) == ("A4", 0.0))
+      assert(NoteFrequencies.findClosestNote(60) == ("", 0.0)) // Out of bounds
+      assert(NoteFrequencies.findClosestNote(2000) == ("", 0.0)) // Out of bounds
+      assert(NoteFrequencies.findClosestNote(190) == ("G3", -6.0))
+      assert(NoteFrequencies.findClosestNote(890) == ("A5", 10.0))
+    }
+  }
+
   describe("Sound analysis") {
     it("should recognize a amplitude and frequency of a single tone (in tune)") {
       val wavFile = WavFile.openWavFile(getWaveFile("ahighnote.wav"))
@@ -29,8 +39,8 @@ class AnalysisSpec extends FunSpec {
       var framesRead = 0
       do {
         framesRead = wavFile.readFrames(buffer, size)
-        val amplitude = analysis.analyse(buffer(0))
-        if (amplitude > -60 /* [dB] */) {
+        val result = analysis.analyse(buffer(0))
+        if (result.amplitude > -60 /* [dB] */) {
           frameWithSound += 1
         }
         // do something with buffer
@@ -71,8 +81,8 @@ class AnalysisSpec extends FunSpec {
         .map(x => x.toDouble).toArray
 
       val analysis = new Analysis(fs, noise.length)
-      val amplitude = analysis.analyse(noise)
-      assert(amplitude > 0.1)
+      val result = analysis.analyse(noise)
+      assert(result.amplitude > 0.1)
     }
   }
 }

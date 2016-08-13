@@ -134,8 +134,8 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
         real(i) = data(i).toDouble
       }
 
-      val amplitude = analysis.analyse(real)
-      amplitudes.add(new Entry(amplitude.toFloat, frame))
+      val result = analysis.analyse(real)
+      amplitudes.add(new Entry(result.amplitude.toFloat, frame))
       noteNames.add("a")
       frame += 1
     }
@@ -148,11 +148,94 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
   }
 }
 
-class Analysis(val sampleRate: Double, length: Int) {
+object NoteFrequencies {
+  // Source: http://www.phy.mtu.edu/~suits/notefreqs.html
+  private val nameAndFreq: List[(String, Double)] = List(
+    "G3" -> 196.0,
+    "A3" -> 220.0,
+    "B3" -> 246.94,
+    "C4" -> 261.63,
+    "C#4" -> 277.18,
+    "D4" -> 293.66,
+    "E4" -> 329.63,
+    "F4" -> 349.23,
+    "F#4" -> 369.99,
+    "G4" -> 392.0,
+    "A4" -> 440.0,
+    "B4" -> 493.88,
+    "C5" -> 523.25,
+    "C#5" -> 554.37,
+    "D5" -> 587.33,
+    "E5" -> 659.25,
+    "F5" -> 698.46,
+    "F#5" -> 739.99,
+    "G5" -> 783.99,
+    "A5" -> 880.00,
+    "B5" -> 987.77
+  )
+
+  private val frequencies: List[Double] = nameAndFreq.map(x => x._2)
+
+  private val names: List[String] = nameAndFreq.map(x => x._1)
+
+  private val tolerance = 0.8
+
+  val lowerBound: Double = frequencies.head * tolerance
+
+  val upperBound: Double = frequencies.last / tolerance
+
+  private val noResult = ("", 0.0)
+
+  def findClosestNote(freq: Double): (String, Double) = {
+    // The first two checks filter out completely unreasonable frequencies
+    if (freq < lowerBound) {
+      return noResult
+    }
+
+    if (freq > upperBound) {
+      return noResult
+    }
+
+    if (freq <= frequencies.head)
+    {
+      return calcDiff(freq, 0)
+    }
+
+    if (freq >= frequencies.last)
+    {
+      return calcDiff(freq, frequencies.length - 1)
+    }
+
+    for (i <- 1 until frequencies.length) {
+      if (freq >= frequencies(i - 1) && freq <= frequencies(i)) {
+        val diffLower = freq - frequencies(i - 1)
+        val diffHigher = frequencies(i) - freq
+        if (diffLower < diffHigher) {
+          return calcDiff(freq, i - 1)
+        }
+        else {
+          return calcDiff(freq, i)
+        }
+
+      }
+    }
+
+    noResult
+  }
+
+  private def calcDiff(freq: Double, index: Int): (String, Double) = {
+    (names(index), freq - frequencies(index))
+  }
+}
+
+case class AnalysisResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double)
+
+class Analysis(sampleRate: Double, length: Int) {
   private val fft = new FFT(length)
   private val imag = new Array[Double](length)
+  private val rbw = sampleRate / length
 
-  def analyse(real: Array[Double]): Double = {
+  def analyse(real: Array[Double]): AnalysisResult = {
     for (i <- 0 until length) {
       imag(i) = 0.0
     }
@@ -164,7 +247,11 @@ class Analysis(val sampleRate: Double, length: Int) {
 
     fft.fft(real, imag)
     val (_, amplitude) = findPeak(real)
-    10 * Math.log10(amplitude)
+    AnalysisResult(
+      0,
+      0,
+      "",
+      10 * Math.log10(amplitude))
   }
 
   private def findPeak(magnitude: Array[Double]): (Int, Double) = {
