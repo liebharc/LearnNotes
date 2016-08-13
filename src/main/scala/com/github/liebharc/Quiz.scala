@@ -60,9 +60,9 @@ trait QuizBehaviour extends Activity with TypedFindView {
 
   private val volume = 1.0f
 
-  private lazy val noteImageView = findView(TR.noteimage)
+  private def noteImageView = findView(TR.noteimage)
 
-  private lazy val statsView = findView(TR.stats)
+  private def statsView = findView(TR.stats)
 
   /*
     Useful links for soundpool:

@@ -24,26 +24,24 @@ class MainActivity
     pager.setAdapter(new PagerAdapter(getSupportFragmentManager))
     val actionBar = getActionBar()
     actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS)
-    val tabListener = new PagerTabListener(this)
     val names = "Control" :: "Feedback" :: "Quiz" :: Nil
     for (name <- names) {
       val page =
         actionBar
           .newTab()
           .setText(name)
-          .setTabListener(tabListener)
+          .setTabListener(new PagerTabListener(pager))
       actionBar.addTab(page)
     }
   }
 }
 
-class PagerTabListener(owner: MainActivity) extends TabListener {
+class PagerTabListener(pager: ViewPager) extends TabListener {
   override def onTabReselected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit = ()
 
   override def onTabUnselected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit = ()
 
   override def onTabSelected(tab: Tab, fragmentTransaction: FragmentTransaction) {
-    val pager = owner.findView(TR.pager)
     pager.setCurrentItem(tab.getPosition)
   }
 }

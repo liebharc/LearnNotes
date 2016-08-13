@@ -9,7 +9,7 @@ import android.view.{LayoutInflater, View, ViewGroup}
 import com.github.mikephil.charting.data._
 
 trait FeedbackBehaviour extends Activity with TypedFindView {
-  lazy val pitchChart = findView(TR.pitch)
+  def pitchChart = findView(TR.pitch)
 
   def initializeFeedback() {
     val entries  = new util.ArrayList[Entry]
