@@ -10,7 +10,8 @@ import scala.concurrent.duration.Duration
 trait ControlBehaviour
   extends Activity
     with TypedFindView
-    with SoundPoolProvider {
+    with SoundPoolProvider
+    with FeedbackBehaviour {
   private var isRunning: Boolean = false
 
   /*
@@ -27,11 +28,11 @@ trait ControlBehaviour
     editing link on the bottom right of the page after downloading.
     this sound was requested by sam.
    */
-  lazy val metronomeSound = soundPool.load(this, R.raw.metronome, 1)
+  private lazy val metronomeSound = soundPool.load(this, R.raw.metronome, 1)
 
-  def runStopButton = findView(TR.buttonStartStopAnalysis)
+  private def runStopButton = findView(TR.buttonStartStopAnalysis)
 
-  def metronomeSpeed = findView(TR.metrospeed)
+  private def metronomeSpeed = findView(TR.metrospeed)
 
   def initializeControl(): Unit = {
     updateControlGuiStatus()
@@ -56,7 +57,7 @@ trait ControlBehaviour
   def runStopFeedback(view: View): Unit = {
     isRunning = !isRunning
     if (isRunning) {
-      stopMetronome
+      stopMetronome()
       val bpm = metronomeSpeed.getText.toString.toInt
       if (bpm > 0) {
         val bps = bpm.toDouble / 60.0
@@ -71,9 +72,12 @@ trait ControlBehaviour
           thread.start()
         }
       }
+
+      startAnalysis()
     }
     else {
-      stopMetronome
+      stopMetronome()
+      stopAnalysis()
     }
 
     updateControlGuiStatus()

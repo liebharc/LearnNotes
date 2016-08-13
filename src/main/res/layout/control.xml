@@ -30,7 +30,7 @@
             android:id="@+id/labelmetro"
             android:layout_width="wrap_content"
             android:layout_height="80sp"
-            android:text="Metronom" />
+            android:text="Metronome" />
         <EditText
                 android:id="@+id/metrospeed"
                 android:layout_width="fill_parent"
