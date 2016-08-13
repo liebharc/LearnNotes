@@ -170,16 +170,18 @@ class AnalysisLoop() extends java.lang.Runnable {
 
     val recorder = recorderOption.get
     val sampleRate = recorder.getSampleRate
+    val targetIntervalInS = 0.125 /* [s] */
     Log.i(LogTag, "Running analysis with " + sampleRate + " Sa/s")
     recorder.startRecording()
-    val data = new Array[Short](BufferElements)
-    val real = new Array[Double](BufferElements)
-    val analysis = new Analysis(sampleRate, BufferElements)
+    val size = Math.max(BufferElements, closestPowerOfTwo(targetIntervalInS * sampleRate))
+    val data = new Array[Short](size)
+    val real = new Array[Double](size)
+    val analysis = new Analysis(sampleRate, size)
 
     var frame = 0
     while (active) {
-      recorder.read(data, 0, BufferElements)
-      for (i <- 0 until BufferElements) {
+      recorder.read(data, 0, size)
+      for (i <- 0 until size) {
         real(i) = data(i).toDouble
       }
 
@@ -191,6 +193,10 @@ class AnalysisLoop() extends java.lang.Runnable {
     }
     recorder.stop()
     recorder.release()
+  }
+
+  def closestPowerOfTwo(number: Double): Int = {
+    Math.round(Math.pow(2, Math.ceil((Math.log(number)/Math.log(2))))).toInt
   }
 }
 
