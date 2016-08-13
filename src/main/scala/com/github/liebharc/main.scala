@@ -1,5 +1,7 @@
 package com.github.liebharc
 
+import android.app.{ActionBar, FragmentTransaction}
+import android.app.ActionBar.{Tab, TabListener}
 import android.content.Context
 import android.os._
 import android.support.v4.app._
@@ -19,6 +21,33 @@ class MainActivity
     setContentView(R.layout.main)
     val pager = findView(TR.pager)
     pager.setAdapter(new PagerAdapter(getSupportFragmentManager))
+    val actionBar = getActionBar()
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS)
+    val tabListener = new PagerTabListener(this)
+    val page1 =
+      actionBar
+        .newTab()
+        .setText("Feedback")
+        .setTabListener(tabListener)
+    actionBar.addTab(page1)
+
+    val page2 =
+      actionBar
+        .newTab()
+        .setText("Quiz")
+        .setTabListener(tabListener)
+    actionBar.addTab(page2)
+  }
+}
+
+class PagerTabListener(owner: MainActivity) extends TabListener {
+  override def onTabReselected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit = ()
+
+  override def onTabUnselected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit = ()
+
+  override def onTabSelected(tab: Tab, fragmentTransaction: FragmentTransaction) {
+    val pager = owner.findView(TR.pager)
+    pager.setCurrentItem(tab.getPosition)
   }
 }
 
