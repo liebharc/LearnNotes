@@ -66,18 +66,12 @@ class FeedbackFragment extends Fragment {
     val typedActivity = getActivity.asInstanceOf[FeedbackBehaviour]
     typedActivity.initializeFeedback()
   }
-}/*
-case class AudioSettings(sampleRate: Double, channel: Int, encoding: Int) {
-  def bytesPerSample = if (encoding == AudioFormat.ENCODING_PCM_16BIT) { 2 } else { 1 }
-}*/
+}
 
 class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
   private val SampleRates = List(8000, 11025, 22050, 44100) // Try to find a low as possible sample rate
-  private val Channel = AudioFormat.CHANNEL_IN_MONO
-  private val Encoding = AudioFormat.ENCODING_PCM_16BIT
-
-  private val BufferElements = 1024 // want to play 2048 (2K) since 2 bytes we use only 102
-
+  private val BufferElements = 1024 // Number of double elements
+  private val LogTag = "Violin Feedback"
   private var active = true
 
   def abort(): Unit = {
@@ -95,12 +89,12 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
     // driven by performance considerations. Not sure if this is one of them.
     val mic = 1
 
-    for (audioFormat <- List(AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_PCM_8BIT);
+    for (audioFormat <- List(AudioFormat.ENCODING_PCM_16BIT); // Don't try AudioFormat.ENCODING_PCM_8BIT since that would change our types later
          channelConfig <- List(AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO);
          sampleRate <- SampleRates) {
       try {
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-        Log.d("Violin Feedback", "Attempting rate " + sampleRate + "Hz, bits: " + audioFormat + ", channel: " + channelConfig);
+        Log.d(LogTag, "Attempting rate " + sampleRate + "Hz, bits: " + audioFormat + ", channel: " + channelConfig);
         if (bufferSize != AudioRecord.ERROR_BAD_VALUE && bufferSize <= BufferElements) {
           // check if we can instantiate and have a success
           val recorder = new AudioRecord(mic, sampleRate, channelConfig, audioFormat, BufferElements);
@@ -111,7 +105,7 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
         }
       }
       catch {
-        case e: Exception => Log.e("Violin Feedback", sampleRate + "Exception, keep trying.", e);
+        case e: Exception => Log.e(LogTag, sampleRate + "Exception, keep trying.", e);
       }
     }
 
@@ -125,11 +119,12 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
     }
 
     val recorder = recorderOption.get
+    val sampleRate = recorder.getSampleRate
+    Log.i(LogTag, "Running analysis with " + sampleRate + " Sa/s")
     recorder.startRecording()
     val data = new Array[Short](BufferElements)
     val real = new Array[Double](BufferElements)
-    val imag = new Array[Double](BufferElements)
-    val anlysis = new Analysis(BufferElements)
+    val analysis = new Analysis(sampleRate, BufferElements)
     val amplitudes  = new util.ArrayList[Entry]
     val noteNames  = new util.ArrayList[String]
     var frame = 0
@@ -137,10 +132,9 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
       recorder.read(data, 0, BufferElements);
       for (i <- 0 until BufferElements) {
         real(i) = data(i).toDouble
-        imag(i) = 0.0f
       }
 
-      val amplitude = anlysis.analyse(real, imag)
+      val amplitude = analysis.analyse(real)
       amplitudes.add(new Entry(amplitude.toFloat, frame))
       noteNames.add("a")
       frame += 1
@@ -154,18 +148,23 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
   }
 }
 
-class Analysis(length: Int) {
+class Analysis(val sampleRate: Double, length: Int) {
   private val fft = new FFT(length)
+  private val imag = new Array[Double](length)
 
-  def analyse(real: Array[Double], imag: Array[Double]): Double = {
+  def analyse(real: Array[Double]): Double = {
+    for (i <- 0 until length) {
+      imag(i) = 0.0
+    }
+
     fft.fft(real, imag)
     for (i <- 0 until length) {
       real(i) = Math.sqrt(real(i) * real(i) + imag(i) * imag(i))
-      fft.fft(real, imag)
     }
 
+    fft.fft(real, imag)
     val (_, amplitude) = findPeak(real)
-    amplitude
+    10 * Math.log10(amplitude)
   }
 
   private def findPeak(magnitude: Array[Double]): (Int, Double) = {
