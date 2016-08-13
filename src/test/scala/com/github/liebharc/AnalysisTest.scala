@@ -1,10 +1,9 @@
 package com.github.liebharc
 
-import org.scalatest.FunSpec
 import java.io.File
 
 import co.uk.labbookpages.WavFile
-import org.jtransforms.fft.DoubleFFT_1D
+import org.scalatest.FunSpec
 
 class AnalysisSpec extends FunSpec {
 
