@@ -16,7 +16,7 @@ class AnalysisSpec extends FunSpec {
   describe("Sound analysis") {
     it("should recognize a amplitude and frequency of a single tone (in tune)") {
       val wavFile = WavFile.openWavFile(getWaveFile("ahighnote.wav"))
-      val size = 128
+      val size = 8192
       val buffer = new Array[Array[Double]](2)
       for (i <- 0 until buffer.length) {
         buffer(i) = new Array[Double](size)
@@ -30,7 +30,7 @@ class AnalysisSpec extends FunSpec {
       do {
         framesRead = wavFile.readFrames(buffer, size)
         val amplitude = analysis.analyse(buffer(0))
-        if (amplitude > 0.1) {
+        if (amplitude > -60 /* [dB] */) {
           frameWithSound += 1
         }
         // do something with buffer
