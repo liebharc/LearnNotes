@@ -5,9 +5,18 @@
     android:paddingLeft="16dp"
     android:orientation="vertical"
     android:paddingRight="16dp" >
-    <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:text="Under construction" />
+    <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/pitch"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    <!--com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/speed"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/loudness"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" /-->
 </LinearLayout>

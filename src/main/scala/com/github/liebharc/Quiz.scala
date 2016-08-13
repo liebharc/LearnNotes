@@ -199,7 +199,7 @@ trait QuizBehaviour extends Activity with TypedFindView {
     }
   }
 
-  def initialize() = {
+  def initializeBehaviour() = {
     statsView.setText(stats.humanFriendly)
     pickNewSound()
   }
@@ -215,6 +215,6 @@ class QuizFragment extends Fragment {
   override def onViewCreated(view: View, savedInstanceState: Bundle) = {
     super.onViewCreated(view, savedInstanceState)
     val typedActivity = getActivity.asInstanceOf[QuizBehaviour]
-    typedActivity.initialize()
+    typedActivity.initializeBehaviour()
   }
 }
