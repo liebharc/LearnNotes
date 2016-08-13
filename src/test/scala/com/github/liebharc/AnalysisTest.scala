@@ -25,32 +25,37 @@ class AnalysisSpec extends FunSpec {
 
   describe("Sound analysis") {
     it("should recognize a amplitude and frequency of a single tone (in tune)") {
-      val wavFile = WavFile.openWavFile(getWaveFile("ahighnote.wav"))
+      val wavFile = WavFile.openWavFile(getWaveFile("anote.wav"))
       val size = 8192
       val buffer = new Array[Array[Double]](2)
       for (i <- 0 until buffer.length) {
         buffer(i) = new Array[Double](size)
       }
 
-      val analysis = new Analysis(44100, buffer.length)
+      val analysis = new Analysis(44100, size)
 
       var frameCount = 0
-      var frameWithSound = 0
       var framesRead = 0
+      val noteCounts: collection.mutable.Map[String, Int] = collection.mutable.Map()
       do {
         framesRead = wavFile.readFrames(buffer, size)
         val result = analysis.analyse(buffer(0))
-        if (result.amplitude > -60 /* [dB] */) {
-          frameWithSound += 1
+        if (noteCounts.contains(result.note))
+        {
+          noteCounts(result.note) = noteCounts(result.note) + 1
         }
+        else {
+          noteCounts(result.note) = 0
+        }
+
         // do something with buffer
         frameCount += 1
       } while (framesRead != 0)
 
       wavFile.close()
 
-      val ratio = frameWithSound.toDouble / frameCount.toDouble
-      assert(ratio > 0.05)
+      val dominantNote = noteCounts.maxBy(e => e._2)
+      assert(dominantNote._1 == "A4")
     }
 
     it("should be able to deal with pure noise") {

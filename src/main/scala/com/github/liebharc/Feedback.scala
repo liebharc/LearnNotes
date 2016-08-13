@@ -126,6 +126,7 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
     val real = new Array[Double](BufferElements)
     val analysis = new Analysis(sampleRate, BufferElements)
     val amplitudes  = new util.ArrayList[Entry]
+    val freqDiffs  = new util.ArrayList[Entry]
     val noteNames  = new util.ArrayList[String]
     var frame = 0
     while (active) {
@@ -136,15 +137,26 @@ class AnalysisLoop(amplitudesChart: LineChart) extends java.lang.Runnable {
 
       val result = analysis.analyse(real)
       amplitudes.add(new Entry(result.amplitude.toFloat, frame))
-      noteNames.add("a")
+      freqDiffs.add(new Entry(result.frequency.toFloat, frame))
+      noteNames.add(result.note)
       frame += 1
     }
     recorder.stop()
     recorder.release()
 
-    val dataSet = new LineDataSet(amplitudes, "Amplitudes")
-    val lineData = new LineData(noteNames, dataSet)
+    val ampDataSet = new LineDataSet(amplitudes, "Amplitudes")
+    val freqDiffDataSet = new LineDataSet(freqDiffs, "Pitch Error")
+    val lineData = new LineData(noteNames, combine(ampDataSet, freqDiffDataSet))
     amplitudesChart.setData(lineData)
+  }
+
+  private def combine(dataSets: LineDataSet*): util.ArrayList[LineDataSet] = {
+    val result = new util.ArrayList[LineDataSet](dataSets.length)
+    for (set <- dataSets) {
+      result.add(set)
+    }
+
+    result
   }
 }
 
@@ -228,37 +240,49 @@ object NoteFrequencies {
   }
 }
 
-case class AnalysisResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double)
+case class FrameResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double)
 
 class Analysis(sampleRate: Double, length: Int) {
   private val fft = new FFT(length)
   private val imag = new Array[Double](length)
   private val rbw = sampleRate / length
 
-  def analyse(real: Array[Double]): AnalysisResult = {
+  def analyse(real: Array[Double]): FrameResult = {
     for (i <- 0 until length) {
       imag(i) = 0.0
     }
 
     fft.fft(real, imag)
-    for (i <- 0 until length) {
+    // The FFT doesn't do a FFT shift. Since the data is time domain data is real
+    // the spectrum will be symmetric. We can therefore ignore the 2nd half
+    // completely
+    val spectrumLength = length / 2
+    for (i <- 0 until spectrumLength) {
       real(i) = Math.sqrt(real(i) * real(i) + imag(i) * imag(i))
     }
 
-    fft.fft(real, imag)
-    val (_, amplitude) = findPeak(real)
-    AnalysisResult(
-      0,
-      0,
-      "",
-      10 * Math.log10(amplitude))
+    val lowerBound = Math.round(NoteFrequencies.lowerBound / rbw).toInt
+    val upperBound = Math.round(NoteFrequencies.upperBound / rbw).toInt
+    val (peakidx, amplitude) =
+      findPeak(
+        real,
+        Math.max(0, lowerBound),
+         Math.min(spectrumLength - 1, upperBound))
+    val frequency = peakidx * rbw
+    val (note, diff) = NoteFrequencies.findClosestNote(frequency)
+
+    FrameResult(
+      frequency,
+      100.0 * diff / frequency,
+      note,
+      10 * Math.log10(2 * amplitude))
   }
 
-  private def findPeak(magnitude: Array[Double]): (Int, Double) = {
-    var maxIdx = 0
+  private def findPeak(magnitude: Array[Double], lowerBound: Int, uppperBound: Int): (Int, Double) = {
+    var maxIdx = lowerBound
     var maxValue = magnitude(maxIdx)
-    for (i <- maxIdx + 1 until length) {
-      if (magnitude(i) > i) {
+    for (i <- maxIdx + 1 to uppperBound) {
+      if (magnitude(i) > maxValue) {
         maxIdx = i
         maxValue = magnitude(maxIdx)
       }
