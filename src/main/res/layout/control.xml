@@ -17,7 +17,8 @@
                 android:id="@+id/buttonStartStopAnalysis"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start/Stop"/>
+                android:text="Start/Stop"
+                android:onClick="runStopFeedback"/>
     </RelativeLayout>
     <RelativeLayout
         android:orientation="horizontal"

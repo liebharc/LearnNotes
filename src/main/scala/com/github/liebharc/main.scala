@@ -3,18 +3,40 @@ package com.github.liebharc
 import android.app.{ActionBar, FragmentTransaction}
 import android.app.ActionBar.{Tab, TabListener}
 import android.content.Context
+import android.media.{AudioAttributes, SoundPool}
 import android.os._
 import android.support.v4.app._
 import android.support.v4.view._
 import android.util.AttributeSet
 import android.view.MotionEvent
 
+trait SoundPoolProvider {
+  def soundPool: SoundPool
+}
+
 class MainActivity
     extends FragmentActivity
     with TypedFindView
     with QuizBehaviour
     with FeedbackBehaviour
+    with SoundPoolProvider
     with ControlBehaviour {
+
+  /*
+    Useful links for soundpool:
+    https://dzone.com/articles/playing-sounds-android
+    http://stackoverflow.com/questions/17069955/play-sound-using-soundpool-example#17070454
+   */
+  lazy val soundPool = {
+    val attributes = new AudioAttributes.Builder()
+      .setUsage(AudioAttributes.USAGE_GAME)
+      .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+      .build()
+
+    new SoundPool.Builder()
+      .setAudioAttributes(attributes)
+      .build()
+  }
 
   /** Called when the activity is first created. */
   override def onCreate(savedInstanceState: Bundle): Unit =  {

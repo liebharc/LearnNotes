@@ -56,29 +56,16 @@ object SoundTriplet {
   = List(TooLowSample(name, bitmap, tooLow), PerfectSample(name, bitmap, perfect), TooHighSample(name, bitmap, tooHigh))
 }
 
-trait QuizBehaviour extends Activity with TypedFindView {
+trait QuizBehaviour
+  extends Activity
+    with TypedFindView
+    with SoundPoolProvider {
 
   private val volume = 1.0f
 
   private def noteImageView = findView(TR.noteimage)
 
   private def statsView = findView(TR.stats)
-
-  /*
-    Useful links for soundpool:
-    https://dzone.com/articles/playing-sounds-android
-    http://stackoverflow.com/questions/17069955/play-sound-using-soundpool-example#17070454
-   */
-  private lazy val soundPool = {
-    val attributes = new AudioAttributes.Builder()
-      .setUsage(AudioAttributes.USAGE_GAME)
-      .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-      .build()
-
-    new SoundPool.Builder()
-      .setAudioAttributes(attributes)
-      .build()
-  }
 
   private lazy val sounds = {
     var samples: List[List[SoundSample]] = Nil
