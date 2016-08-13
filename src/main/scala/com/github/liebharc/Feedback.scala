@@ -25,8 +25,13 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
 
   private var currentThread: Option[Thread] = None
 
-  def initializeFeedback(): Unit = {
+  private var lastData: Option[ChartData] = None
 
+  def initializeFeedback(): Unit = {
+    lastData match {
+      case Some(d) => display(d)
+      case _ => ()
+    }
   }
 
   def startAnalysis(): Unit = {
@@ -43,11 +48,44 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
       case Some(r) =>
         r.abort()
         joinThread()
-        r.display(pitchChart)
+        lastData = Some(r.chartData)
+        display(r.chartData)
       case _ => ()
     }
 
     audioRecord = None
+  }
+
+  private def display(data: ChartData): Unit = {
+    val white = 0xFFFFFFFF
+    val red = ColorTemplate.COLORFUL_COLORS(0)
+    val orange  = ColorTemplate.COLORFUL_COLORS(1)
+    val formatter = new AddNoteNamesValueFormatter(data.noteNames)
+    val ampDataSet = new LineDataSet(data.amplitudes, "Amplitudes")
+    ampDataSet.setColor(orange)
+    ampDataSet.setCircleColor(orange)
+    val freqDiffDataSet = new LineDataSet(data.freqDiffs, "Pitch Error")
+    freqDiffDataSet.setColor(red)
+    freqDiffDataSet.setCircleColor(red)
+    val lineData = new LineData(combine(ampDataSet, freqDiffDataSet))
+    lineData.setValueFormatter(formatter)
+    lineData.setValueTextColor(white)
+    pitchChart.setData(lineData)
+    pitchChart.setDescription("")
+    pitchChart.setDescriptionColor(white)
+    pitchChart.getXAxis.setTextColor(white)
+    pitchChart.getAxisLeft.setTextColor(white)
+    pitchChart.getAxisRight.setTextColor(white)
+    pitchChart.invalidate()
+  }
+
+  private def combine(dataSets: LineDataSet*): util.List[ILineDataSet] = {
+    val result = new util.ArrayList[ILineDataSet](dataSets.length)
+    for (set <- dataSets) {
+      result.add(set)
+    }
+
+    result
   }
 
   private def joinThread(): Unit = {
@@ -69,6 +107,12 @@ class FeedbackFragment extends Fragment {
     val typedActivity = getActivity.asInstanceOf[FeedbackBehaviour]
     typedActivity.initializeFeedback()
   }
+}
+
+class ChartData {
+  val amplitudes  = new util.ArrayList[Entry]
+  val freqDiffs  = new util.ArrayList[Entry]
+  val noteNames  = new util.ArrayList[String]
 }
 
 class AnalysisLoop() extends java.lang.Runnable {
@@ -116,9 +160,7 @@ class AnalysisLoop() extends java.lang.Runnable {
     None
   }
 
-  private val amplitudes  = new util.ArrayList[Entry]
-  private val freqDiffs  = new util.ArrayList[Entry]
-  private val noteNames  = new util.ArrayList[String]
+  val chartData = new ChartData()
 
   override def run(): Unit = {
     val recorderOption = attemptToCreateAnAudioRecord()
@@ -142,45 +184,13 @@ class AnalysisLoop() extends java.lang.Runnable {
       }
 
       val result = analysis.analyse(real)
-      amplitudes.add(new Entry(frame, result.amplitude.toFloat))
-      freqDiffs.add(new Entry(frame, result.deltaFrequency.toFloat))
-      noteNames.add(result.note)
+      chartData.amplitudes.add(new Entry(frame, result.amplitude.toFloat))
+      chartData.freqDiffs.add(new Entry(frame, result.deltaFrequency.toFloat))
+      chartData.noteNames.add(result.note)
       frame += 1
     }
     recorder.stop()
     recorder.release()
-  }
-
-  def display(amplitudesChart: LineChart): Unit = {
-    val white = 0xFFFFFFFF
-    val red = ColorTemplate.COLORFUL_COLORS(0)
-    val orange  = ColorTemplate.COLORFUL_COLORS(1)
-    val formatter = new AddNoteNamesValueFormatter(noteNames)
-    val ampDataSet = new LineDataSet(amplitudes, "Amplitudes")
-    ampDataSet.setColor(orange)
-    ampDataSet.setCircleColor(orange)
-    val freqDiffDataSet = new LineDataSet(freqDiffs, "Pitch Error")
-    freqDiffDataSet.setColor(red)
-    freqDiffDataSet.setCircleColor(red)
-    val lineData = new LineData(combine(ampDataSet, freqDiffDataSet))
-    lineData.setValueFormatter(formatter)
-    lineData.setValueTextColor(white)
-    amplitudesChart.setData(lineData)
-    amplitudesChart.setDescription("")
-    amplitudesChart.setDescriptionColor(white)
-    amplitudesChart.getXAxis.setTextColor(white)
-    amplitudesChart.getAxisLeft.setTextColor(white)
-    amplitudesChart.getAxisRight.setTextColor(white)
-    amplitudesChart.invalidate()
-  }
-
-  private def combine(dataSets: LineDataSet*): util.List[ILineDataSet] = {
-    val result = new util.ArrayList[ILineDataSet](dataSets.length)
-    for (set <- dataSets) {
-      result.add(set)
-    }
-
-    result
   }
 }
 
