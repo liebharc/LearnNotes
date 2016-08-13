@@ -17,7 +17,7 @@ class MainActivity
     with ControlBehaviour {
 
   /** Called when the activity is first created. */
-  override def onCreate(savedInstanceState: Bundle) {
+  override def onCreate(savedInstanceState: Bundle): Unit =  {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main)
     val pager = findView(TR.pager)
@@ -41,7 +41,7 @@ class PagerTabListener(pager: ViewPager) extends TabListener {
 
   override def onTabUnselected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit = ()
 
-  override def onTabSelected(tab: Tab, fragmentTransaction: FragmentTransaction) {
+  override def onTabSelected(tab: Tab, fragmentTransaction: FragmentTransaction): Unit =  {
     pager.setCurrentItem(tab.getPosition)
   }
 }

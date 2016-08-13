@@ -6,8 +6,14 @@ import android.support.v4.app.Fragment
 import android.view.{LayoutInflater, View, ViewGroup}
 
 trait ControlBehaviour extends Activity with TypedFindView {
+  private var isRunning: Boolean = false
 
-  def initializeControl() {
+  def runStopButton = findView(TR.buttonStartStopAnalysis)
+
+  def metronomSpeed = findView(TR.metrospeed)
+
+  def initializeControl(): Unit = {
+
   }
 }
 
@@ -18,7 +24,7 @@ class ControlFragment extends Fragment {
     return view
   }
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit = {
     super.onViewCreated(view, savedInstanceState)
     val typedActivity = getActivity.asInstanceOf[ControlBehaviour]
     typedActivity.initializeControl()

@@ -11,7 +11,7 @@ import com.github.mikephil.charting.data._
 trait FeedbackBehaviour extends Activity with TypedFindView {
   def pitchChart = findView(TR.pitch)
 
-  def initializeFeedback() {
+  def initializeFeedback(): Unit = {
     val entries  = new util.ArrayList[Entry]
     for (i <- 0 until 5) {
       entries .add(new Entry(i.toFloat, i))

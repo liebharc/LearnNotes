@@ -134,25 +134,25 @@ trait QuizBehaviour extends Activity with TypedFindView {
 
   private var stats = Statistics(0, 0)
 
-  private def pickNewSound() {
+  private def pickNewSound(): Unit =  {
     val pick = Utils.randomPick(sounds)
     currentSound = Some(pick)
     noteImageView.setImageBitmap(pick.bitmap)
   }
 
-  private def rightInput() {
+  private def rightInput(): Unit =  {
     stats = stats.rightInput()
     statsView.setText(stats.humanFriendly)
     pickNewSound()
     playCurrentSound()
   }
 
-  private def wrongInput() {
+  private def wrongInput(): Unit =  {
     stats = stats.wrongInput()
     statsView.setText(stats.humanFriendly)
   }
 
-  def tooLowSelected(view: View) {
+  def tooLowSelected(view: View): Unit = {
     currentSound match {
       case None => ()
       case Some(sound) if sound.isTooLow =>
@@ -162,7 +162,7 @@ trait QuizBehaviour extends Activity with TypedFindView {
     }
   }
 
-  def perfectSelected(view: View) {
+  def perfectSelected(view: View): Unit =  {
     currentSound match {
       case None => ()
       case Some(sound) if sound.isPerfect =>
@@ -172,7 +172,7 @@ trait QuizBehaviour extends Activity with TypedFindView {
     }
   }
 
-  def tooHighSelected(view: View) {
+  def tooHighSelected(view: View): Unit =  {
     currentSound match {
       case None => ()
       case Some(sound) if sound.isTooHigh =>
@@ -182,16 +182,16 @@ trait QuizBehaviour extends Activity with TypedFindView {
     }
   }
 
-  def replaySound(view: View) {
+  def replaySound(view: View): Unit = {
     playCurrentSound()
   }
 
-  def statsReset(view: View) {
+  def statsReset(view: View): Unit = {
     stats = Statistics(0, 0)
     statsView.setText(stats.humanFriendly)
   }
 
-  def playCurrentSound() {
+  def playCurrentSound(): Unit = {
     currentSound match {
       case None => ()
       case Some(sound) =>
@@ -199,7 +199,7 @@ trait QuizBehaviour extends Activity with TypedFindView {
     }
   }
 
-  def initializeBehaviour() = {
+  def initializeBehaviour(): Unit = {
     statsView.setText(stats.humanFriendly)
     pickNewSound()
   }
@@ -212,7 +212,7 @@ class QuizFragment extends Fragment {
     return view
   }
 
-  override def onViewCreated(view: View, savedInstanceState: Bundle) = {
+  override def onViewCreated(view: View, savedInstanceState: Bundle): Unit =  {
     super.onViewCreated(view, savedInstanceState)
     val typedActivity = getActivity.asInstanceOf[QuizBehaviour]
     typedActivity.initializeBehaviour()
