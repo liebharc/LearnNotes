@@ -20,20 +20,7 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
   private var audioRecord: Option[AnalysisLoop] = None
 
   def initializeFeedback(): Unit = {
-    val entries  = new util.ArrayList[Entry]
-    for (i <- 0 until 5) {
-      entries .add(new Entry(i.toFloat, i))
-    }
 
-    val dataSet = new LineDataSet(entries, "Label")
-    val xLabels  = new util.ArrayList[String]
-    xLabels.add("a")
-    xLabels.add("b")
-    xLabels.add("c#")
-    xLabels.add("d")
-    xLabels.add("e")
-    val lineData = new LineData(xLabels, dataSet)
-    pitchChart.setData(lineData)
   }
 
   def startAnalysis(): Unit = {
