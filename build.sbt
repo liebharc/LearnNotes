@@ -4,8 +4,7 @@ javacOptions in Compile ++= "-source" :: "1.7" :: "-target" :: "1.7" :: Nil
 
 platformTarget in Android := "android-21"
 
-libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "2.2.6" % "test",
-                            "com.github.wendykierp" % "JTransforms" % "3.1")
+libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "2.2.6" % "test")
 
 val createNoteImages = TaskKey[Unit]("create-note-images", "Creates the notes images. This is a task since a resource generator isn't executed in the right moment.")
 
