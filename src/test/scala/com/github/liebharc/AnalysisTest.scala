@@ -3,7 +3,6 @@ package com.github.liebharc
 import java.io.File
 
 import co.uk.labbookpages.WavFile
-import com.meapsoft.FFT
 import org.scalatest.FunSpec
 
 class AnalysisSpec extends FunSpec {
@@ -32,7 +31,7 @@ class AnalysisSpec extends FunSpec {
         buffer(i) = new Array[Double](size)
       }
 
-      val analysis = new Analysis(44100, size)
+      val analysis = new FrameAnalysis(44100, size)
 
       var frameCount = 0
       var framesRead = 0
@@ -48,7 +47,6 @@ class AnalysisSpec extends FunSpec {
           noteCounts(result.note) = 0
         }
 
-        // do something with buffer
         frameCount += 1
       } while (framesRead != 0)
 
@@ -85,7 +83,7 @@ class AnalysisSpec extends FunSpec {
         -26,-29,-27,-7,2,9,16,25,1,21,37,40,42,5,-5,-15,-18,-10,-27,-25,-27,-15,-22,-14,2,2,-13,-6,18,38,32,10,32,30,21,25,1,-17,-22,-15,-30,-14,-3,-31,-23,0)
         .map(x => x.toDouble).toArray
 
-      val analysis = new Analysis(fs, noise.length)
+      val analysis = new FrameAnalysis(fs, noise.length)
       val result = analysis.analyse(noise)
       assert(result.amplitude > 0.1)
     }

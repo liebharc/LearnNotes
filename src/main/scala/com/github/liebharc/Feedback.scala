@@ -16,6 +16,7 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import com.github.mikephil.charting.utils.{ColorTemplate, ViewPortHandler}
 import com.meapsoft.FFT
 
+import scala.collection.immutable.LinearSeq
 import scala.concurrent.duration.Duration
 
 trait FeedbackBehaviour extends Activity with TypedFindView {
@@ -176,7 +177,7 @@ class AnalysisLoop() extends java.lang.Runnable {
     val size = Math.max(BufferElements, closestPowerOfTwo(targetIntervalInS * sampleRate))
     val data = new Array[Short](size)
     val real = new Array[Double](size)
-    val analysis = new Analysis(sampleRate, size)
+    val analysis = new FrameAnalysis(sampleRate, size)
 
     var frame = 0
     while (active) {
@@ -299,7 +300,7 @@ object NoteFrequencies {
 
 case class FrameResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double)
 
-class Analysis(sampleRate: Double, length: Int) {
+class FrameAnalysis(sampleRate: Double, length: Int) {
   private val fft = new FFT(length)
   private val imag = new Array[Double](length)
   private val rbw = sampleRate / length
@@ -347,4 +348,13 @@ class Analysis(sampleRate: Double, length: Int) {
 
     (maxIdx, maxValue)
   }
+}
+
+case class MultiFrameResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double, speed: Double)
+
+
+class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
+  val timePerFrame = frameLength / sampleRate
+
+  def analyse(frames: LinearSeq[FrameResult]): List[MultiFrameResult] = List()
 }
