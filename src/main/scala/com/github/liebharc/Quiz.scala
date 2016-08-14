@@ -2,7 +2,6 @@ package com.github.liebharc
 
 import android.app.Activity
 import android.graphics.{Bitmap, BitmapFactory}
-import android.media.{AudioAttributes, SoundPool}
 import android.os._
 import android.support.v4.app.Fragment
 import android.view.{LayoutInflater, View, ViewGroup}
@@ -31,6 +30,9 @@ trait SoundSample {
   def isTooLow: Boolean
   def isTooHigh: Boolean
   def isPerfect: Boolean
+  def storageId = name + bit(isTooLow) + bit(isPerfect) + bit(isTooHigh)
+
+  private def bit(value: Boolean) = if (value) "1" else "0"
 }
 
 case class TooLowSample(name: String, bitmap: Bitmap, id: Int) extends SoundSample {
@@ -121,6 +123,29 @@ trait QuizBehaviour
 
   private var stats = Statistics(0, 0)
 
+  override def onSaveInstanceState(bundle: Bundle): Unit = {
+    super.onSaveInstanceState(bundle)
+    currentSound match {
+      case Some(s) => bundle.putString("currentSound", s.storageId)
+      case _ => ()
+    }
+
+    bundle.putInt("wrongGuess", stats.wrong)
+    bundle.putInt("rightGuess", stats.right)
+  }
+
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    if (savedInstanceState != null) {
+      val wrong = savedInstanceState.getInt("wrongGuess")
+      val right = savedInstanceState.getInt("rightGuess")
+      stats = Statistics(right, wrong)
+      val soundId = savedInstanceState.getString("currentSound")
+      val selectedSound = sounds.find(r => r.storageId == soundId)
+      currentSound = selectedSound
+    }
+  }
+
   private def pickNewSound(): Unit =  {
     val pick = Utils.randomPick(sounds)
     currentSound = Some(pick)
@@ -188,7 +213,12 @@ trait QuizBehaviour
 
   def initializeBehaviour(): Unit = {
     statsView.setText(stats.humanFriendly)
-    pickNewSound()
+    if (currentSound.isEmpty) {
+      pickNewSound()
+    } else {
+      val sound = currentSound.get
+      noteImageView.setImageBitmap(sound.bitmap)
+    }
   }
 }
 

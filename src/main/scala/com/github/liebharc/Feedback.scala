@@ -19,6 +19,7 @@ import com.meapsoft.FFT
 import scala.collection.immutable.LinearSeq
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
+import scala.reflect.ClassTag
 
 trait FeedbackBehaviour extends Activity with TypedFindView {
   private def pitchChart: LineChart = findView(TR.pitch)
@@ -32,6 +33,31 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
   def initializeFeedback(): Unit = {
     lastData match {
       case Some(d) => display(d)
+      case _ => ()
+    }
+  }
+
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    lastData match {
+      case Some(d) => display(d)
+      case _ =>
+        if (savedInstanceState != null) {
+          val data = new ChartData
+          data.load(savedInstanceState)
+          lastData = Some(data)
+          display(data)
+        }
+    }
+  }
+
+  override def onSaveInstanceState(bundle: Bundle): Unit = {
+    super.onSaveInstanceState(bundle)
+    lastData match {
+      case Some(d) =>
+        if (bundle != null) {
+          d.store(bundle)
+        }
       case _ => ()
     }
   }
@@ -59,6 +85,11 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
   }
 
   private def display(data: ChartData): Unit = {
+    val chart = pitchChart
+    if (chart == null) {
+      return
+    }
+
     val white = 0xFFFFFFFF
     val red = ColorTemplate.COLORFUL_COLORS(0)
     val orange = ColorTemplate.COLORFUL_COLORS(1)
@@ -76,13 +107,13 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
     val lineData = new LineData(combine(ampDataSet, freqDiffDataSet, speedDataSet))
     lineData.setValueFormatter(formatter)
     lineData.setValueTextColor(white)
-    pitchChart.setData(lineData)
-    pitchChart.setDescription("")
-    pitchChart.setDescriptionColor(white)
-    pitchChart.getXAxis.setTextColor(white)
-    pitchChart.getAxisLeft.setTextColor(white)
-    pitchChart.getAxisRight.setTextColor(white)
-    pitchChart.invalidate()
+    chart.setData(lineData)
+    chart.setDescription("")
+    chart.setDescriptionColor(white)
+    chart.getXAxis.setTextColor(white)
+    chart.getAxisLeft.setTextColor(white)
+    chart.getAxisRight.setTextColor(white)
+    chart.invalidate()
   }
 
   private def combine(dataSets: LineDataSet*): util.List[ILineDataSet] = {
@@ -120,6 +151,47 @@ class ChartData {
   val freqDiffs  = new util.ArrayList[Entry]
   val speed  = new util.ArrayList[Entry]
   val noteNames  = new util.ArrayList[String]
+
+  def store(bundle: Bundle): Unit = {
+    bundle.putFloatArray("amplitudes", conv(amplitudes).map(r => r.getY))
+    bundle.putFloatArray("freqDiffs", conv(freqDiffs).map(r => r.getY))
+    bundle.putFloatArray("speed", conv(speed).map(r => r.getY))
+    bundle.putStringArray("noteNames", conv(noteNames))
+  }
+
+  def load(bundle: Bundle): Unit = {
+    loadArray(bundle.getFloatArray("amplitudes"), amplitudes)
+    loadArray(bundle.getFloatArray("freqDiffs"), freqDiffs)
+    loadArray(bundle.getFloatArray("speed"), speed)
+    val names = bundle.getStringArray("noteNames")
+    if (names != null)
+    {
+      for (n <- names) {
+        noteNames.add(n)
+      }
+    }
+  }
+
+  private def conv[T](arrayList: util.ArrayList[T])(implicit m: ClassTag[T]): Array[T] = {
+    val result = new Array[T](arrayList.size())
+    for (i <- 0 until arrayList.size()) {
+      result(i) = arrayList.get(i)
+    }
+
+    result
+  }
+
+  private def loadArray(array: Array[Float], target: util.ArrayList[Entry]): Unit = {
+    if (array == null) {
+      return
+    }
+
+    var i = 0
+    for (f <- array) {
+      target.add(new Entry(i.toFloat, f))
+      i += 1
+    }
+  }
 }
 
 class AnalysisLoop() extends java.lang.Runnable {
@@ -222,12 +294,12 @@ class AnalysisLoop() extends java.lang.Runnable {
   }
 
   def closestPowerOfTwo(number: Double): Int = {
-    Math.round(Math.pow(2, Math.ceil((Math.log(number)/Math.log(2))))).toInt
+    Math.round(Math.pow(2, Math.ceil(Math.log(number)/Math.log(2)))).toInt
   }
 }
 
 class AddNoteNamesValueFormatter(val notes: util.ArrayList[String]) extends ValueFormatter {
- private val decimalFormat: DecimalFormat = new DecimalFormat("########0") // Integer part only
+  private val decimalFormat: DecimalFormat = new DecimalFormat("########0") // Integer part only
 
   override def getFormattedValue(value: Float, entry: Entry, dataSetIndex: Int, viewPortHandler: ViewPortHandler): String = {
     val index = Math.round(entry.getX)
@@ -356,9 +428,9 @@ class FrameAnalysis(sampleRate: Double, length: Int) {
 
     FrameResult(
       frequency,
-      100.0 * diff / frequency,
+      1000 * diff / frequency,
       note,
-      10 * Math.log10(2 * amplitude))
+      10 * Math.log10(2 * amplitude)) // Factor 2, since we only consider half the spectrum and thus only half the power
   }
 
   private def findPeak(magnitude: Array[Double], lowerBound: Int, uppperBound: Int): (Int, Double) = {
@@ -383,11 +455,14 @@ object MultiFrameResult {
 
 case class MultiFrameResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double, speed: Double)
 
-
 class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
   val timePerFrame = frameLength / sampleRate
 
   def analyse(frames: LinearSeq[FrameResult]): List[MultiFrameResult] = {
+    if (frames.length < 5) {
+      return frames.map(r => MultiFrameResult(r, Double.NaN)).toList
+    }
+
     val peaks = amplitudePeakDetect(frames)
     val speed = diffDiv(peaks, 60 / timePerFrame)
     val atNotePos =
@@ -401,7 +476,7 @@ class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
     var maxValue = frames(1).amplitude
     val peaks: ListBuffer[Int] = ListBuffer()
     for (i <- 1 until frames.length - 1) {
-      if (frames(i).amplitude > frames(i - 1).amplitude && frames(i).amplitude > (frames(i + 1).amplitude)) {
+      if (frames(i).amplitude > frames(i - 1).amplitude && frames(i).amplitude > frames(i + 1).amplitude) {
         if (frames(i).amplitude > maxValue) {
           maxValue = frames(i).amplitude
         }

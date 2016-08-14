@@ -34,8 +34,29 @@ trait ControlBehaviour
 
   private def metronomeSpeed = findView(TR.metrospeed)
 
+  private var metronomeSaved = ""
+
   def initializeControl(): Unit = {
     updateControlGuiStatus()
+    if (metronomeSaved != null
+      && !metronomeSaved.isEmpty
+      && metronomeSpeed != null) {
+      metronomeSpeed.setText(metronomeSaved)
+    }
+  }
+
+  override def onSaveInstanceState(bundle: Bundle): Unit = {
+    super.onSaveInstanceState(bundle)
+    if (metronomeSpeed != null) {
+      bundle.putString("metronome", metronomeSpeed.getText.toString)
+    }
+  }
+
+  override def onCreate(savedInstanceState: Bundle): Unit = {
+    super.onCreate(savedInstanceState)
+    if (savedInstanceState != null) {
+      metronomeSaved = savedInstanceState.getString("metronome")
+    }
   }
 
   private def updateControlGuiStatus(): Unit = {
@@ -58,18 +79,20 @@ trait ControlBehaviour
     isRunning = !isRunning
     if (isRunning) {
       stopMetronome()
-      val bpm = metronomeSpeed.getText.toString.toInt
-      if (bpm > 0) {
-        val bps = bpm.toDouble / 60.0
-        val soundDuration = Duration(176, "ms")
-        val waitInterval = 1000.0 / bps.toDouble
-        val duration = Duration(waitInterval.toLong, "ms") - soundDuration
-        if (duration.toMillis > 0)
-        {
-          val metronome = new Metronome(duration, this, metronomeSound)
-          currentMetronome = Some(metronome)
-          val thread = new java.lang.Thread(metronome)
-          thread.start()
+      val speedString = metronomeSpeed.getText.toString
+      if (speedString != null && !speedString.isEmpty) {
+        val bpm = metronomeSpeed.getText.toString.toInt
+        if (bpm > 0) {
+          val bps = bpm.toDouble / 60.0
+          val soundDuration = Duration(176, "ms")
+          val waitInterval = 1000.0 / bps.toDouble
+          val duration = Duration(waitInterval.toLong, "ms") - soundDuration
+          if (duration.toMillis > 0) {
+            val metronome = new Metronome(duration, this, metronomeSound)
+            currentMetronome = Some(metronome)
+            val thread = new java.lang.Thread(metronome)
+            thread.start()
+          }
         }
       }
 

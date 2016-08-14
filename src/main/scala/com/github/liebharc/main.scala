@@ -22,6 +22,8 @@ class MainActivity
     with SoundPoolProvider
     with ControlBehaviour {
 
+  private def pager = findView(TR.pager)
+
   /*
     Useful links for soundpool:
     https://dzone.com/articles/playing-sounds-android
@@ -38,11 +40,14 @@ class MainActivity
       .build()
   }
 
-  /** Called when the activity is first created. */
+  override def onSaveInstanceState(bundle: Bundle): Unit = {
+    super.onSaveInstanceState(bundle)
+    bundle.putInt("LastTab", findView(TR.pager).getCurrentItem)
+  }
+
   override def onCreate(savedInstanceState: Bundle): Unit =  {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.main)
-    val pager = findView(TR.pager)
     pager.setAdapter(new PagerAdapter(getSupportFragmentManager))
     val actionBar = getActionBar
     actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS)
@@ -54,6 +59,13 @@ class MainActivity
           .setText(name)
           .setTabListener(new PagerTabListener(pager))
       actionBar.addTab(page)
+    }
+
+    if (savedInstanceState != null) {
+      val lastTab = savedInstanceState.getInt("LastTab")
+      if (lastTab >= 0 && lastTab < actionBar.getTabCount) {
+        actionBar.getTabAt(lastTab).select()
+      }
     }
   }
 }
@@ -69,7 +81,6 @@ class PagerTabListener(pager: ViewPager) extends TabListener {
 }
 
 class PagerAdapter(manager: FragmentManager) extends FragmentPagerAdapter(manager) {
-
   override def getCount = 3
 
   override def getPageTitle(position: Int): CharSequence = "Page #" + position
@@ -85,7 +96,6 @@ class PagerAdapter(manager: FragmentManager) extends FragmentPagerAdapter(manage
 }
 
 class CustomViewPager(context: Context, attr: AttributeSet) extends ViewPager(context, attr) {
-
   var enabled: Boolean = false
 
   override def onTouchEvent(ev: MotionEvent): Boolean = {
