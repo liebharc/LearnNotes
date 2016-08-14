@@ -17,6 +17,7 @@ import com.github.mikephil.charting.utils.{ColorTemplate, ViewPortHandler}
 import com.meapsoft.FFT
 
 import scala.collection.immutable.LinearSeq
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.Duration
 
 trait FeedbackBehaviour extends Activity with TypedFindView {
@@ -350,11 +351,53 @@ class FrameAnalysis(sampleRate: Double, length: Int) {
   }
 }
 
+object MultiFrameResult {
+  def apply(result: FrameResult, speed: Double): MultiFrameResult = {
+    MultiFrameResult(result.frequency, result.deltaFrequency, result.note, result.amplitude, speed)
+  }
+}
+
 case class MultiFrameResult(frequency: Double, deltaFrequency: Double, note: String, amplitude: Double, speed: Double)
 
 
 class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
   val timePerFrame = frameLength / sampleRate
 
-  def analyse(frames: LinearSeq[FrameResult]): List[MultiFrameResult] = List()
+  def analyse(frames: LinearSeq[FrameResult]): List[MultiFrameResult] = {
+    val peaks = amplitudePeakDetect(frames)
+    val speed = diffDiv(peaks, 60 / timePerFrame)
+    val atNotePos =
+      peaks.drop(1)
+        .zip(speed)
+        .map{case (i, s) => MultiFrameResult(frames(i), s)}
+    atNotePos
+  }
+
+  private def amplitudePeakDetect(frames: LinearSeq[FrameResult]): List[Int] = {
+    var maxValue = frames(1).amplitude
+    val peaks: ListBuffer[Int] = ListBuffer()
+    for (i <- 1 until frames.length - 1) {
+      if (frames(i).amplitude > frames(i - 1).amplitude && frames(i).amplitude > (frames(i + 1).amplitude)) {
+        if (frames(i).amplitude > maxValue) {
+          maxValue = frames(i).amplitude
+        }
+
+        peaks.append(i)
+      }
+    }
+
+    // Filter out quite parts, likely noise
+    peaks
+      .filter(i => frames(i).amplitude > maxValue * 0.6)
+      .toList
+  }
+
+  private def diffDiv(data: List[Int], factor: Double): Array[Double] = {
+    val result = Array[Double](data.length - 1)
+    for (i <- 0 until result.length) {
+      result(i) = factor / (data(i + 1) - data(i))
+    }
+
+    result
+  }
 }
