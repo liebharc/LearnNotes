@@ -61,7 +61,8 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
   private def display(data: ChartData): Unit = {
     val white = 0xFFFFFFFF
     val red = ColorTemplate.COLORFUL_COLORS(0)
-    val orange  = ColorTemplate.COLORFUL_COLORS(1)
+    val orange = ColorTemplate.COLORFUL_COLORS(1)
+    val darkGreen = ColorTemplate.COLORFUL_COLORS(2)
     val formatter = new AddNoteNamesValueFormatter(data.noteNames)
     val ampDataSet = new LineDataSet(data.amplitudes, "Amplitudes")
     ampDataSet.setColor(orange)
@@ -69,7 +70,10 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
     val freqDiffDataSet = new LineDataSet(data.freqDiffs, "Pitch Error")
     freqDiffDataSet.setColor(red)
     freqDiffDataSet.setCircleColor(red)
-    val lineData = new LineData(combine(ampDataSet, freqDiffDataSet))
+    val speedDataSet = new LineDataSet(data.speed, "Speed")
+    speedDataSet.setColor(darkGreen)
+    speedDataSet.setCircleColor(darkGreen)
+    val lineData = new LineData(combine(ampDataSet, freqDiffDataSet, speedDataSet))
     lineData.setValueFormatter(formatter)
     lineData.setValueTextColor(white)
     pitchChart.setData(lineData)
@@ -114,6 +118,7 @@ class FeedbackFragment extends Fragment {
 class ChartData {
   val amplitudes  = new util.ArrayList[Entry]
   val freqDiffs  = new util.ArrayList[Entry]
+  val speed  = new util.ArrayList[Entry]
   val noteNames  = new util.ArrayList[String]
 }
 
@@ -179,7 +184,7 @@ class AnalysisLoop() extends java.lang.Runnable {
     val data = new Array[Short](size)
     val real = new Array[Double](size)
     val analysis = new FrameAnalysis(sampleRate, size)
-
+    val frames:ListBuffer[FrameResult] = ListBuffer()
     var frame = 0
     while (active) {
       recorder.read(data, 0, size)
@@ -188,13 +193,32 @@ class AnalysisLoop() extends java.lang.Runnable {
       }
 
       val result = analysis.analyse(real)
-      chartData.amplitudes.add(new Entry(frame, result.amplitude.toFloat))
-      chartData.freqDiffs.add(new Entry(frame, result.deltaFrequency.toFloat))
-      chartData.noteNames.add(result.note)
+      frames.append(result)
       frame += 1
     }
     recorder.stop()
     recorder.release()
+
+    val multiFrameAnalysis = new MultiFrameAnalysis(sampleRate, size)
+    val result = multiFrameAnalysis.analyse(frames.toList)
+    copyToArrayList(result.map(r => r.amplitude), chartData.amplitudes)
+    copyToArrayList(result.map(r => r.deltaFrequency), chartData.freqDiffs)
+    copyToArrayList(result.map(r => r.speed), chartData.speed)
+    copyNameToArrayList(result.map(r => r.note), chartData.noteNames)
+  }
+
+  private def copyToArrayList(list: List[Double], target: util.ArrayList[Entry]): Unit = {
+    var i = 0
+    for (l <- list) {
+      target.add(new Entry(i.toFloat, l.toFloat))
+      i += 1
+    }
+  }
+
+  private def copyNameToArrayList(list: List[String], target: util.ArrayList[String]): Unit = {
+    for (l <- list) {
+      target.add(l)
+    }
   }
 
   def closestPowerOfTwo(number: Double): Int = {
@@ -367,7 +391,7 @@ class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
     val peaks = amplitudePeakDetect(frames)
     val speed = diffDiv(peaks, 60 / timePerFrame)
     val atNotePos =
-      peaks.drop(1)
+      peaks
         .zip(speed)
         .map{case (i, s) => MultiFrameResult(frames(i), s)}
     atNotePos
@@ -392,12 +416,13 @@ class MultiFrameAnalysis(sampleRate: Double, frameLength: Int) {
       .toList
   }
 
-  private def diffDiv(data: List[Int], factor: Double): Array[Double] = {
-    val result = Array[Double](data.length - 1)
-    for (i <- 0 until result.length) {
-      result(i) = factor / (data(i + 1) - data(i))
+  private def diffDiv(data: List[Int], factor: Double): List[Double] = {
+    val result: ListBuffer[Double] = ListBuffer()
+    result.append(factor / data(0))
+    for (i <- 0 until data.length - 1) {
+      result.append(factor / (data(i + 1) - data(i)))
     }
 
-    result
+    result.toList
   }
 }

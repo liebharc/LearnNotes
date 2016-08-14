@@ -39,7 +39,7 @@ class SpeedAnalysis extends FunSpec {
       val speed = new MultiFrameAnalysis(44100, size)
       val result: List[MultiFrameResult] = speed.analyse(frames.toList)
       val averageSpeed = result.map(r => r.speed).sum / result.length
-      assert(averageSpeed > 60.0 && averageSpeed < 70)
+      assert(averageSpeed > 90.0 && averageSpeed < 120)
     }
   }
 }
