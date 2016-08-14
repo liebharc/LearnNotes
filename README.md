@@ -15,13 +15,15 @@ While recording do the following:
 
 1. Obtain sound samples of about a 1/8th of a second (frame length)
 2. Calculate spectrum of the frame (using a FFT)
-3. Find the maximum magnitude, the position of the maximum gives us the frequency and the amplitude the loudness
+3. Find the maximum magnitude, the position of the maximum gives us the frequency and the amplitude
 
 As soon as the recording is finished:
 
 4. Find peaks in the amplitude data obtained earlier
 5. Assuming that every peak is a note, remove all amplitude and frequency values which are not at a peak
-6. The delta between the position of of adjacent peaks gives us the speed
+6. The time delta between the position of adjacent peaks gives us the speed
+
+One more note: This was tested with an external microphone which is connected to the phones Aux In. It also works with the phones microphone but - at least for the test device - the results were much poorer.
 
 ## Build
 `sbt android:install` with a connected Android device
