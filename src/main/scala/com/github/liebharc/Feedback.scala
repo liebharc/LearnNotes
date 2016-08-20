@@ -35,6 +35,8 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
       case Some(d) => display(d)
       case _ => ()
     }
+
+    onNewDataAvailable(lastData)
   }
 
   override def onCreate(savedInstanceState: Bundle): Unit = {
@@ -49,6 +51,8 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
           display(data)
         }
     }
+
+    onNewDataAvailable(lastData)
   }
 
   override def onSaveInstanceState(bundle: Bundle): Unit = {
@@ -82,6 +86,11 @@ trait FeedbackBehaviour extends Activity with TypedFindView {
     }
 
     audioRecord = None
+    onNewDataAvailable(lastData)
+  }
+
+  protected def onNewDataAvailable(data: Option[ChartData]): Unit = {
+
   }
 
   private def display(data: ChartData): Unit = {
@@ -192,6 +201,51 @@ class ChartData {
       i += 1
     }
   }
+
+  def averageSpeed(): Float = {
+    if (speed.size() == 0) {
+      return Float.NaN
+    }
+
+    conv(speed).map(e => e.getY).sum / speed.size()
+  }
+
+  def noteStats(): Map[String, (Float, Float, Float)] = {
+    if (freqDiffs.size() == 0) {
+      return Map()
+    }
+
+    val notes = conv(noteNames).zip(conv(freqDiffs).map(e => e.getY))
+    val noteGroups = notes.groupBy(n => n._1)
+    val noteAverage = noteGroups.map{
+      case (n, p) =>
+        val avg = p.map(p => p._2).sum / p.length
+        val rms = Math.sqrt(p.map(p => p._2 * p._2).sum  / p.length).toFloat
+        val stddev = Math.sqrt(p.map(p => (p._2 - avg) * (p._2 - avg)).sum  / p.length).toFloat
+        (n, (avg, rms, stddev))
+    }
+    noteAverage
+  }
+
+  def summaryString(): String = {
+    def format(value: Float): String = {
+      val integer = math.round(value)
+      "%5d".format(integer)
+    }
+
+    val averageSpeed = this.averageSpeed()
+    val speedString = "Average speed [bpm]: " + format(averageSpeed)
+
+    val noteAverage =  noteStats()
+    val noteString = noteAverage.map{
+      case (n, p) =>
+        val avg = format(p._1)
+        val rms = format(p._2)
+        val stddev = format(p._3)
+        n + ":" + avg + ", " + rms + ", " + stddev}
+      .mkString("\n")
+    speedString + "\n" + "Note: AVG, RMS, STDDEV\n" + noteString
+  }
 }
 
 class AnalysisLoop() extends java.lang.Runnable {
@@ -249,7 +303,7 @@ class AnalysisLoop() extends java.lang.Runnable {
 
     val recorder = recorderOption.get
     val sampleRate = recorder.getSampleRate
-    val targetIntervalInS = 0.125 /* [s] */
+    val targetIntervalInS = 1.0 / 8.0 /* [s] */
     Log.i(LogTag, "Running analysis with " + sampleRate + " Sa/s")
     recorder.startRecording()
     val size = Math.max(BufferElements, closestPowerOfTwo(targetIntervalInS * sampleRate))

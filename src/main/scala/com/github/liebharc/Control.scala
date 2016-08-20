@@ -34,6 +34,8 @@ trait ControlBehaviour
 
   private def metronomeSpeed = findView(TR.metrospeed)
 
+  private def summaryField = findView(TR.summary)
+
   private var metronomeSaved = ""
 
   def initializeControl(): Unit = {
@@ -104,6 +106,19 @@ trait ControlBehaviour
     }
 
     updateControlGuiStatus()
+  }
+
+  override def onNewDataAvailable(data: Option[ChartData]): Unit = {
+    super.onNewDataAvailable(data)
+
+    if (summaryField == null) {
+      return
+    }
+
+    data match {
+      case Some(d) => summaryField.setText(d.summaryString)
+      case None => summaryField.setText("")
+    }
   }
 }
 

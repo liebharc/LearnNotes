@@ -39,4 +39,10 @@
                 android:text="0"
                 android:layout_toRightOf="@id/labelmetro"/>
     </RelativeLayout>
+    <TextView
+            android:id="@+id/summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="" />
 </LinearLayout>
