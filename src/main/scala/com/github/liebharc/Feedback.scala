@@ -203,14 +203,21 @@ class ChartData {
   }
 
   def averageSpeed(): Float = {
-    if (speed.size() == 0) {
+    if (this.speed.size() == 0) {
       return Float.NaN
     }
 
-    conv(speed).map(e => e.getY).sum / speed.size()
+    val speed = conv(this.speed)
+    val average = speed.map(e => e.getY).sum / speed.length
+    val lessOutliners = speed.map(e => e.getY).filter(f => f > 0.5 * average && f < 2 * average)
+    if (lessOutliners.length == 0) {
+      return average
+    }
+
+    return  lessOutliners.sum / lessOutliners.length
   }
 
-  def noteStats(): Map[String, (Float, Float, Float)] = {
+  def noteStats(): Map[String, (Int, Float, Float, Float)] = {
     if (freqDiffs.size() == 0) {
       return Map()
     }
@@ -219,10 +226,11 @@ class ChartData {
     val noteGroups = notes.groupBy(n => n._1)
     val noteAverage = noteGroups.map{
       case (n, p) =>
+        val count = p.length
         val avg = p.map(p => p._2).sum / p.length
         val rms = Math.sqrt(p.map(p => p._2 * p._2).sum  / p.length).toFloat
         val stddev = Math.sqrt(p.map(p => (p._2 - avg) * (p._2 - avg)).sum  / p.length).toFloat
-        (n, (avg, rms, stddev))
+        (n, (count, avg, rms, stddev))
     }
     noteAverage
   }
@@ -237,14 +245,18 @@ class ChartData {
     val speedString = "Average speed [bpm]: " + format(averageSpeed)
 
     val noteAverage =  noteStats()
-    val noteString = noteAverage.map{
-      case (n, p) =>
-        val avg = format(p._1)
-        val rms = format(p._2)
-        val stddev = format(p._3)
-        n + ":" + avg + ", " + rms + ", " + stddev}
+    val noteString = noteAverage
+        .toList
+        .sortWith{ case (a, b) => a._2._1 > b._2._1 }
+        .map{
+          case (n, p) =>
+            val count = format(p._1.toFloat)
+            val avg = format(p._2)
+            val rms = format(p._3)
+            val stddev = format(p._4)
+            n + ":" + count + ", " + avg + ", " + rms + ", " + stddev}
       .mkString("\n")
-    speedString + "\n" + "Note: AVG, RMS, STDDEV\n" + noteString
+    speedString + "\n" + "Note: COUNT, AVG, RMS, STDDEV\n" + noteString
   }
 }
 
